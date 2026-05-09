@@ -1,4 +1,4 @@
-import { MazeGrid, CellPos, Wall, WALL } from '../types/maze';
+import { MazeGrid, Wall, WALL } from '../types/maze';
 import { WallSegment } from '../types/simulation';
 
 export const hasWall = (grid: MazeGrid, row: number, col: number, direction: Wall): boolean => {

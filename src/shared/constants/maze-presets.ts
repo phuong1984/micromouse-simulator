@@ -1,4 +1,4 @@
-import { MazeGrid, CellPos } from '../types/maze';
+import { MazeGrid } from '../types/maze';
 
 const createEmptyCells = (rows: number, cols: number): number[][] => {
   return Array(rows).fill(null).map(() => Array(cols).fill(0));

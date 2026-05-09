@@ -14,3 +14,19 @@ html, body, #root {
 *, *::before, *::after {
   box-sizing: border-box;
 }
+
+.bg-maze-floor {
+  background-color: #f5f5f0;
+}
+
+.text-maze-wall {
+  color: #2d2d2d;
+}
+
+.text-accent {
+  color: #1976d2;
+}
+
+.border-maze-wall {
+  border-color: #2d2d2d;
+}

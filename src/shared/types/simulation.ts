@@ -1,5 +1,3 @@
-import { Vector2D } from './robot';
-
 export type SimStatus = 'idle' | 'running' | 'paused' | 'finished' | 'error';
 
 export interface WallSegment {

@@ -8,16 +8,11 @@ export interface StartPayload {
   pythonCode: string;
 }
 
-export interface MainToWorker {
-  type: 'START';
-  payload: StartPayload;
-} | {
-  type: 'STOP';
-} | {
-  type: 'STEP';
-} | {
-  type: 'RESET';
-};
+export type MainToWorker =
+  | { type: 'START'; payload: StartPayload }
+  | { type: 'STOP' }
+  | { type: 'STEP' }
+  | { type: 'RESET' };
 
 export interface StateUpdatePayload {
   state: SimState;
@@ -32,16 +27,8 @@ export interface ErrorPayload {
   error: string;
 }
 
-export interface WorkerToMain {
-  type: 'STATE_UPDATE';
-  payload: StateUpdatePayload;
-} | {
-  type: 'FINISHED';
-  payload: FinishedPayload;
-} | {
-  type: 'PYTHON_ERROR';
-  payload: ErrorPayload;
-} | {
-  type: 'WORKER_ERROR';
-  payload: ErrorPayload;
-};
+export type WorkerToMain =
+  | { type: 'STATE_UPDATE'; payload: StateUpdatePayload }
+  | { type: 'FINISHED'; payload: FinishedPayload }
+  | { type: 'PYTHON_ERROR'; payload: ErrorPayload }
+  | { type: 'WORKER_ERROR'; payload: ErrorPayload };
