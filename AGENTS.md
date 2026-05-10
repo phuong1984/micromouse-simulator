@@ -81,14 +81,13 @@ index.html, package.json, etc.
 
 ## Current Phase & Status
 
-**Current Phase**: 0 — Setup & Infrastructure
-**Source code**: DELETED (clean start). New structure created with placeholder files.
+**Current Phase**: 2 — Blockly + Python Codegen
 
 | Phase | Status |
 |-------|--------|
-| 0 | Setup & Infrastructure | ⬜ |
-| 1 | Static Renderer (PixiJS) | ⬜ |
-| 2 | Blockly + Python Codegen | ⬜ |
+| 0 | Setup & Infrastructure | ✅ Hoàn |
+| 1 | Static Renderer (PixiJS) | ✅ Hoàn |
+| 2 | Blockly + Python Codegen | ⬜ Đang làm |
 | 3 | MicroPython Execution Engine | ⬜ |
 | 4 | Physics & Simulation Loop | ⬜ |
 | 5 | Sensor Simulation | ⬜ |
@@ -168,24 +167,27 @@ MazeGrid: { rows, cols, cellSize:180, wallThickness:12, cells:number[][], start:
 RobotSpec: { base:BaseSpec, motors:MotorSpec[], wheels:WheelSpec[], sensors:SensorSpec[] }
 SimState: { tick, robot{x,y,angle,vx,vy,av}, sensors:Record<string,number>, motorRPMs, isFinished, elapsedMs }
 WallSegment: { x, y, width, height, angle } // mm
+MainToWorker: { type:'START'|'STOP'|'STEP'|'RESET', payload? }
+WorkerToMain: { type:'STATE_UPDATE'|'FINISHED'|'PYTHON_ERROR'|'WORKER_ERROR', payload }
 ```
 
 ## How to Start a Session
 
-1. Đọc `plan/00_TRACKING.md` để biết status hiện tại
-2. Đọc file plan của phase đang làm (VD: `plan/01_PHASE_0_SETUP.md`)
-3. Làm theo tasks từ trên xuống
-4. Cập nhật checklist khi hoàn thành
-5. Gặp vấn đề → check `docs/micromouse_docs/` gốc
+1. Đọc `SESSION_BRIEF.md` để biết mục tiêu session hiện tại
+2. Đọc `plan/00_TRACKING.md` để biết status tổng thể
+3. Đọc file plan của phase đang làm (VD: `plan/03_PHASE_2_BLOCKLY.md`)
+4. Làm theo tasks từ trên xuống, verify `npm run build && npm run lint` sau mỗi task
+5. Cập nhật checklist trong file plan + `00_TRACKING.md` khi hoàn thành
+6. Gặp vấn đề → check `docs/micromouse_docs/` gốc
 
 ## Important Docs (đọc theo thứ tự khi implement module)
 
 | Phase | Doc cần đọc |
 |-------|-------------|
 | 0-1 | 00, 02, 07 |
-| 2-3 | 05, 06 |
-| 4 | 03 |
-| 5 | 04 |
-| 6-7 | 01 |
-| 8 | 08 |
+| 2-3 | 05 (CODE_SANDBOX), 06 (BLOCKLY_EDITOR) |
+| 4 | 03 (PHYSICS_ENGINE) |
+| 5 | 04 (SENSOR_SIMULATION) |
+| 6-7 | 01 (ROBOT_CONFIG) |
+| 8 | 08 (TELEMETRY) |
 | 9 | Tất cả |
