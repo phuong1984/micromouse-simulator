@@ -21,6 +21,7 @@ export interface StateUpdatePayload {
 export interface FinishedPayload {
   elapsedMs: number;
   path: Array<{ tick: number; x: number; y: number; angle: number }>;
+  logs: string[];
 }
 
 export interface ErrorPayload {
@@ -31,4 +32,5 @@ export type WorkerToMain =
   | { type: 'STATE_UPDATE'; payload: StateUpdatePayload }
   | { type: 'FINISHED'; payload: FinishedPayload }
   | { type: 'PYTHON_ERROR'; payload: ErrorPayload }
-  | { type: 'WORKER_ERROR'; payload: ErrorPayload };
+  | { type: 'WORKER_ERROR'; payload: ErrorPayload }
+  | { type: 'READY' };

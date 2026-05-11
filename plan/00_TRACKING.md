@@ -11,7 +11,7 @@
 | 0 | Setup & Infrastructure | 8 | 5h | ✅ Hoàn |
 | 1 | Static Renderer | 7 | 8h | ✅ Hoàn |
 | 2 | Blockly + Python Codegen | 8 | 10h | ✅ Hoàn |
-| 3 | MicroPython Execution Engine | 8 | 10h | ⬜ Chưa bắt đầu |
+| 3 | MicroPython Execution Engine | 9 | 10h | ✅ Hoàn |
 | 4 | Physics & Simulation Loop | 8 | 8h | ⬜ Chưa bắt đầu |
 | 5 | Sensor Simulation | 8 | 8h | ⬜ Chưa bắt đầu |
 | 5.5 | Integration | 4 | 3h | ⬜ Chưa bắt đầu |
@@ -29,10 +29,11 @@
 |--------|-------|-----------------|---------|
 | 1 | 0 + 1 | Project setup + static maze + robot | ✅ |
 | 2 | 2 | Blockly → Python code gen | ✅ |
-| 3 | 3 + 4 | MicroPython + physics hoạt động | |
-| 4 | 5 + 5.5 | Sensors + integration test | |
-| 5 | 6 + 7 | Config + Maze editor | |
-| 6 | 8 + 9 | Telemetry + Polish | |
+| 3 | 3 | MicroPython execution engine + console + Run button | ✅ |
+| 4 | 4 | Physics engine + Matter.js tick loop + robot moves | ⬜ |
+| 5 | 5 + 5.5 | Sensors + integration test | ⬜ |
+| 6 | 6 + 7 | Config + Maze editor | ⬜ |
+| 7 | 8 + 9 | Telemetry + Polish | ⬜ |
 
 ---
 
@@ -40,9 +41,9 @@
 
 | # | Vấn đề | Mức độ | Trạng thái |
 |---|--------|--------|------------|
-| 1 | MicroPython WASM hoạt động trong Worker? | 🔴 Cao | Chưa test |
+| 1 | MicroPython WASM hoạt động trong Worker? | 🟢 Thấp | ✅ Tested: worker.format='es' + top-level await OK |
 | 2 | jsffi API ổn định trên v1.28? | 🟡 Trung bình | Chưa test |
-| 3 | Async bridge (JS Promise ↔ Python coroutine) hoạt động? | 🔴 Cao | Chưa test |
+| 3 | Async bridge (JS Promise ↔ Python coroutine) hoạt động? | 🟢 Thấp | Phases 3 dùng sync stubs, Promise deferred đến Phase 4 |
 | 4 | Blockly Python generator đầy đủ blocks cần dùng | 🟢 Thấp | ✅ Đã implement |
 | 5 | Matter.js trong Worker (không dùng DOM) | 🟢 Thấp | Đã design |
 
@@ -80,6 +81,25 @@
 - **Verify**: `npm run build` ✅, `npm run lint` ✅, `npm run dev` ✅ (port 3001)
 - **Verify**: `npm run build` ✅, `npm run lint` ✅, `npm run dev` ✅ (port 3001)
 - **Phase 2 HOÀN TẤT**: Blockly workspace + Python codegen + Monaco editor, build/lint pass, 0 lỗi
+
+### 2026-05-11 (Session 4) — Phase 3 MicroPython Execution Engine
+- **Task 3.1 COMPLETED**: Worker skeleton + MicroPython WASM load (`simulation.worker.ts`)
+- **Task 3.2 COMPLETED**: JS↔Python bridge via `registerJsModule('robot', ...)` — stub functions (move, turn, stop, set_motor_speeds, get_sensor, get_position, get_angle, log)
+- **Task 3.3 COMPLETED**: `runPythonAsync()` execution with auto `import robot` + execute code gốc (không double-wrap)
+- **Task 3.4 COMPLETED**: Robot functions là sync (không Promise) — vì Phase 3 chưa có physics loop, avoid async complexity
+- **Task 3.5 COMPLETED**: Message protocol (START/STOP/RESET + FINISHED/PYTHON_ERROR/READY) + SimulationStore Zustand
+- **Task 3.6 COMPLETED**: Error handling: try/catch → `PYTHON_ERROR` message → console panel hiện đỏ
+- **Task 3.7 COMPLETED**: Console output: stdout → logBuffer → gửi kèm `FINISHED.logs` → TelemetryStore → ConsolePanel
+- **Task 3.8 COMPLETED**: Run ▶ / Stop ⏹ / Reset ↺ buttons + status-aware UI
+- **Bugs fixed during Phase 3**:
+  - WASM MIME error → import `.wasm?url` + `worker.format: 'es'` trong Vite config
+  - Log không hiện → forward `logs: string[]` trong `FinishedPayload`
+  - Log in 2 lần → worker tự wrap code sai (`def solve` → thêm `solve(robot)` nữa)
+- **Types defined**: `FinishedPayload.logs`, `WorkerToMain.READY`, `micropython.mjs` type declaration
+- **New files**: `src/workers/simulation.worker.ts`, `src/workers/types.d.ts`, `src/modules/simulation/store.ts`, `src/modules/telemetry/store.ts`, `src/modules/telemetry/ConsolePanel.tsx`, `src/modules/telemetry/index.ts`
+- **Modified files**: `src/app/App.tsx` (Run button + ConsolePanel), `src/app/App.css`, `vite.config.ts`, `src/shared/types/workerMessages.ts`
+- **Verify**: `npm run lint` ✅, `npm run build` ✅ (micropython.wasm 446KB, worker 78KB)
+- **Phase 3 HOÀN TẤT**: MicroPython WASM load trong Worker, robot API stub, console output, Run/Stop/Reset UI, build/lint pass
 
 ### 2026-05-11 (Session 4) — Phase 2 Polish
 - **Scrollbar fix**: Ẩn Blockly flyout scrollbar bằng CSS (`.blocklyFlyoutScrollbar { display: none }`)

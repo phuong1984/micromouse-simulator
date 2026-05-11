@@ -4,12 +4,18 @@ import { MAZE_5x5_SIMPLE } from '../shared/constants';
 import { DEFAULT_ROBOT } from '../shared/constants';
 import { cellToWorld } from '../shared/utils/maze';
 import { BlocklyEditor, MonacoEditor, useCodeEditorStore } from '../modules/code-editor';
+import { useSimulationStore } from '../modules/simulation';
+import { ConsolePanel } from '../modules/telemetry';
 import './App.css';
 
 function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTab = useCodeEditorStore((s) => s.activeTab);
   const setActiveTab = useCodeEditorStore((s) => s.setActiveTab);
+  const simStatus = useSimulationStore((s) => s.status);
+  const simStart = useSimulationStore((s) => s.start);
+  const simStop = useSimulationStore((s) => s.stop);
+  const simReset = useSimulationStore((s) => s.reset);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -78,6 +84,15 @@ function App() {
           >
             Python
           </button>
+          <div className="flex items-center gap-1 px-2 border-l border-gray-700">
+            {simStatus === 'running' ? (
+              <button onClick={simStop} className="run-btn run-btn-stop">⏹</button>
+            ) : simStatus === 'finished' || simStatus === 'error' ? (
+              <button onClick={simReset} className="run-btn run-btn-reset">↺</button>
+            ) : (
+              <button onClick={simStart} className="run-btn run-btn-start">▶</button>
+            )}
+          </div>
         </div>
         <div className="flex-1 min-h-0 flex flex-col">
           <div className="flex-1 min-h-0" style={{ display: activeTab === 'blockly' ? 'flex' : 'none', flexDirection: 'column' }}>
@@ -86,6 +101,9 @@ function App() {
           <div className="flex-1 min-h-0" style={{ display: activeTab === 'monaco' ? 'flex' : 'none' }}>
             <MonacoEditor />
           </div>
+        </div>
+        <div className="h-32 flex-shrink-0">
+          <ConsolePanel />
         </div>
       </aside>
     </div>

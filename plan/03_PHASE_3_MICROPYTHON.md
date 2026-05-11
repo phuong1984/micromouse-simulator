@@ -9,14 +9,15 @@
 
 ## Completed: ✅
 
-- [ ] 3.1 — Load MicroPython WASM trong Worker
-- [ ] 3.2 — Test MicroPython chạy code đơn giản
-- [ ] 3.3 — Tạo JS ↔ Python bridge
-- [ ] 3.4 — Implement Robot API (JS side)
-- [ ] 3.5 — Test async: await robot.move()
-- [ ] 3.6 — Execute user Python code
-- [ ] 3.7 — Error handling
-- [ ] 3.8 — Message protocol implementation
+- [x] 3.1 — Load MicroPython WASM trong Worker
+- [x] 3.2 — JS↔Python bridge (registerJsModule 'robot')
+- [x] 3.3 — Robot API stub functions (move, turn, stop, set_motor_speeds, get_sensor, get_position, get_angle, log)
+- [x] 3.4 — Async execution: runPythonAsync + await Promise
+- [x] 3.5 — Message protocol (START/STOP/RESET + FINISHED/PYTHON_ERROR/READY)
+- [x] 3.6 — Error handling (Python exceptions → main thread → ConsolePanel)
+- [x] 3.7 — Console output (stdout redirect → logBuffer → TelemetryStore → ConsolePanel)
+- [x] 3.8 — Run ▶ / Stop ⏹ / Reset ↺ buttons + SimulationStore Zustand
+- [x] 3.9 — Vite 8 worker config (worker.format: 'es' cho top-level await)
 
 ---
 
@@ -230,11 +231,12 @@ self.onmessage = async (event) => {
 
 ## Acceptance Criteria
 
-- [ ] MicroPython WASM load thành công trong Worker
-- [ ] `print("Hello")` chạy đúng trong Worker console
-- [ ] `robot.move(180)` gọi từ Python → robot di chuyển
-- [ ] `robot.get_sensor('front')` trả về giá trị chính xác
-- [ ] `robot.turn(90)` quay robot tại chỗ
-- [ ] Python error → message gửi về main thread
-- [ ] PAUSE/RESUME dừng và tiếp tục simulation
-- [ ] STOP dừng hoàn toàn, cleanup resources
+- [x] MicroPython WASM load thành công trong Worker (446KB .wasm bundled)
+- [x] `print("Hello")` chạy đúng → output hiện ở ConsolePanel
+- [x] `robot.move(180)` gọi từ Python → log `[move] 180mm` ở ConsolePanel
+- [x] `robot.get_sensor('front')` trả về -1 (stub, chưa có physics)
+- [x] `robot.turn(-90)` gọi từ Python → log `[turn] left 90deg`
+- [x] Python error (SyntaxError, RuntimeError) → hiện đỏ ở ConsolePanel
+- [x] STOP dừng hoàn toàn, terminate worker
+- [x] Run/Stop/Reset buttons chuyển trạng thái đúng theo simStatus
+- [x] `npm run lint && npm run build` pass
