@@ -4,50 +4,53 @@
 
 ---
 
-- **Date**: 2026-05-09
-- **Current Phase**: Phase 2 — Blockly + Python Codegen
-- **Phase Plan**: `plan/03_PHASE_2_BLOCKLY.md`
-- **Current Tasks**: 2.1 → 2.8
+- **Date**: 2026-05-11
+- **Current Phase**: Phase 3 — MicroPython Execution Engine
+- **Phase Plan**: `plan/03_PHASE_3_MICROPYTHON.md`
+- **Current Tasks**: 3.1 → 3.8
 
 ## Last Session Recap
 
-Phase 1 (Static Renderer) đã hoàn tất:
-- SimulationRenderer với 3-layer scene graph (mazeLayer, robotLayer, overlayLayer)
-- Maze 5×5 vẽ đúng: walls (WALL.NORTH/WEST constants), outer boundaries, start/goal markers
-- Robot (hcn xanh #1976d2 + mũi tên trắng) ở đúng ô start
-- Auto-scale theo viewport (90%), resize redraw cả maze + robot
-- 3-column layout (Config | Canvas | Code)
-- PixiJS v8 dùng pattern `new Application()` + `await app.init()` (tránh deprecated constructor và ResizePlugin crash)
-- PixiJS tự tạo canvas, không dùng `view` option (tránh WebGL context conflict với StrictMode)
-- `npm run build` + `npm run lint` pass, 0 lỗi runtime
+Phase 2 (Blockly + Python Codegen) đã hoàn tất:
+- 6 custom blocks: move, turn, stop, set_motors, get_sensor, wall_detected
+- Python generators cho cả 6 blocks (dùng `blockly/python`)
+- Toolbox JSON với 6 categories (Movement, Sensors, Loops, Logic, Math, Variables)
+- Blockly workspace: inject, grid/zoom/trashcan/scrollbars, ResizeObserver
+- Code sync: changeListener → Zustand store → wrap `def solve(robot)`
+- localStorage persistence
+- Monaco Editor: Python mode, vs-dark theme
+- Tab toggle Blockly ↔ Monaco
+- Flyout scrollbar ẩn bằng CSS (`.blocklyFlyoutScrollbar`)
+- Build/lint pass, 0 lỗi
 
 ## Today's Goal
 
-Bắt đầu Phase 2 — Blockly + Python Codegen:
-- Task 2.1: Cài đặt Blockly workspace trong `code-editor/`
-- Task 2.2: Tạo custom robot blocks (move, turn, sensor)
-- Task 2.3: Tạo toolbox (Tiếng Việt labels)
-- Task 2.4: Python code generator cho robot blocks
-- Task 2.5: Monaco Editor tab
-- Task 2.6: Code editor store (Zustand)
-- Task 2.7: Kết nối Blockly ↔ Monaco (2-way sync)
-- Task 2.8: Verify Blockly → Python output
+Bắt đầu Phase 3 — MicroPython Execution Engine:
+- Task 3.1: MicroPython WASM worker setup
+- Task 3.2: JS ↔ Python bridge via postMessage
+- Task 3.3: Robot API implementation (Python side)
+- Task 3.4: Code execution with timeout
+- Task 3.5: Error handling (Python exceptions → UI)
+- Task 3.6: Blockly Run button
+- Task 3.7: Integrate with Zustand store
+- Task 3.8: Verify: code run → robot moves
 
 ## Starting Point
 <!-- Check: npm run dev works? Files created? -->
 
 - `npm run build` pass
-- `npm run dev` → hiển thị maze + robot
-- Các file trong `src/modules/code-editor/` chưa tồn tại
+- `npm run lint` pass (0 errors)
+- Phase 2 hoàn tất, Phase 3 sẵn sàng
 
 ## Blockers
 
-- Blockly v12 API (2025) cần kiểm tra compatibility với React 19 StrictMode
-- Blockly types cho TypeScript 6.0 cần verify
+- MicroPython WASM (~500KB) hoạt động trong Worker?
+- jsffi API ổn định trên v1.28?
+- Async bridge (JS Promise ↔ Python coroutine)?
 
 ## Notes
 
-- Blockly labels: Tiếng Việt
-- Python generator output: snake_case
-- Workspace lưu vào localStorage
-- KHÔNG import chéo từ modules khác
+- MicroPython WASM file cần copied vào public/ hoặc load từ CDN
+- Robot API functions cần exposed cho Python runtime
+- Timeout 30s cho user code
+- Python exception → hiện lỗi, không crash Worker

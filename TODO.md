@@ -4,16 +4,9 @@
 
 ---
 
-## Phase 2 — Blockly + Python Codegen ⬜
+## Phase 2 — Blockly + Python Codegen ✅
 
-- [ ] 2.1 — Blockly workspace (BlocklyEditor.tsx)
-- [ ] 2.2 — Custom robot blocks (robotBlocks.ts)
-- [ ] 2.3 — Toolbox (toolbox.ts)
-- [ ] 2.4 — Python code generator
-- [ ] 2.5 — Monaco Editor (MonacoEditor.tsx)
-- [ ] 2.6 — Code editor store (store.ts)
-- [ ] 2.7 — Blockly ↔ Monaco 2-way sync
-- [ ] 2.8 — Verify: Blockly → Python output
+> Hoàn tất. Xem `plan/03_PHASE_2_BLOCKLY.md` hoặc `plan/00_TRACKING.md` để biết chi tiết.
 
 ## Upcoming Phases
 
