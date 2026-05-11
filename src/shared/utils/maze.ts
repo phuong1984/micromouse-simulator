@@ -75,10 +75,23 @@ export const mazeToWallSegments = (grid: MazeGrid): WallSegment[] => {
     }
   }
   
+  // North boundary
+  for (let col = 0; col < grid.cols; col++) {
+    const centerX = col * grid.cellSize + halfCell;
+    const centerY = wallThickness / 2;
+    segments.push({
+      x: centerX,
+      y: centerY,
+      width: grid.cellSize,
+      height: wallThickness,
+      angle: 0,
+    });
+  }
+  
   // South boundary
   for (let col = 0; col < grid.cols; col++) {
     const centerX = col * grid.cellSize + halfCell;
-    const centerY = (grid.rows - 0.5) * grid.cellSize;
+    const centerY = grid.rows * grid.cellSize - wallThickness / 2;
     segments.push({
       x: centerX,
       y: centerY,
@@ -90,7 +103,7 @@ export const mazeToWallSegments = (grid: MazeGrid): WallSegment[] => {
   
   // East boundary
   for (let row = 0; row < grid.rows; row++) {
-    const centerX = (grid.cols - 0.5) * grid.cellSize;
+    const centerX = grid.cols * grid.cellSize - wallThickness / 2;
     const centerY = row * grid.cellSize + halfCell;
     segments.push({
       x: centerX,

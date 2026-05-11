@@ -91,8 +91,8 @@ export class SimulationRenderer {
 
     this.mazeLayer.rect(0, 0, grid.cols * cs, wt).fill(color);
     this.mazeLayer.rect(0, 0, wt, grid.rows * cs).fill(color);
-    this.mazeLayer.rect(0, (grid.rows - 1) * cs, grid.cols * cs, wt).fill(color);
-    this.mazeLayer.rect((grid.cols - 1) * cs, 0, wt, grid.rows * cs).fill(color);
+    this.mazeLayer.rect(0, grid.rows * cs - wt, grid.cols * cs, wt).fill(color);
+    this.mazeLayer.rect(grid.cols * cs - wt, 0, wt, grid.rows * cs).fill(color);
   }
 
   private drawMarkers(grid: MazeGrid, startColor: number, goalColor: number): void {
