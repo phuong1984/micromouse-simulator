@@ -35,9 +35,11 @@ interface PendingMove {
 
 let pendingMoves: PendingMove[] = [];
 
-const FORWARD_RPM = 1200;
-const TURN_RPM = 1200;
-const DIAGONAL_INNER_RPM = 600;
+function wheelMaxRPM(): number {
+  return robotSpec && robotSpec.wheels.length > 0
+    ? Math.min(...robotSpec.wheels.map(w => w.maxRPM))
+    : 500;
+}
 
 function postToMain(msg: WorkerToMain) {
   self.postMessage(msg);
@@ -162,7 +164,8 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
           targetDistance: distance,
           resolve,
         });
-        robotPhysics!.motorSpeeds.forEach((_, key) => robotPhysics!.motorSpeeds.set(key, FORWARD_RPM));
+        const rpm = wheelMaxRPM();
+        robotPhysics!.motorSpeeds.forEach((_, key) => robotPhysics!.motorSpeeds.set(key, rpm));
       });
     },
 
@@ -177,9 +180,13 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
           targetAngleDiff: (angle * Math.PI) / 180,
           resolve,
         });
-        const speed = angle > 0 ? TURN_RPM : -TURN_RPM;
-        robotPhysics!.motorSpeeds.set('0', -speed);
-        robotPhysics!.motorSpeeds.set('1', speed);
+        const rpm = wheelMaxRPM();
+        const speed = angle > 0 ? rpm : -rpm;
+        const wheelIds = robotSpec!.wheels.map(w => w.id);
+        if (wheelIds.length >= 2) {
+          robotPhysics!.motorSpeeds.set(wheelIds[0], speed);
+          robotPhysics!.motorSpeeds.set(wheelIds[1], -speed);
+        }
       });
     },
 
@@ -189,10 +196,11 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
       rp.motorSpeeds.forEach((_, key) => rp.motorSpeeds.set(key, 0));
     },
 
-    set_motor_speeds: (left: number, right: number) => {
-      if (!robotPhysics) return;
-      robotPhysics.motorSpeeds.set('0', left);
-      robotPhysics.motorSpeeds.set('1', right);
+    set_wheel_speed: (wheelId: string, rpm: number) => {
+      if (!robotPhysics || !robotSpec) return;
+      if (robotSpec.wheels.some(w => w.id === wheelId)) {
+        robotPhysics.motorSpeeds.set(wheelId, rpm);
+      }
     },
 
     get_sensor: (sensorId: string) => {
@@ -292,38 +300,46 @@ function resetPhysics() {
   pendingMoves = [];
 }
 
+function wheelId(robotSpec: RobotSpec, idx: number): string {
+  return robotSpec.wheels[idx]?.id ?? String(idx);
+}
+
 function handleKeyboard(payload: { up: boolean; down: boolean; left: boolean; right: boolean }) {
-  if (!robotPhysics || !isRunning) return;
+  if (!robotPhysics || !isRunning || !robotSpec) return;
 
   const { up, down, left, right } = payload;
+  const w0 = wheelId(robotSpec, 0);
+  const w1 = wheelId(robotSpec, 1);
+  const rpm = wheelMaxRPM();
+  const inner = Math.round(rpm * 0.5);
 
   if (up && left) {
-    robotPhysics.motorSpeeds.set('0', DIAGONAL_INNER_RPM);
-    robotPhysics.motorSpeeds.set('1', FORWARD_RPM);
+    robotPhysics.motorSpeeds.set(w0, inner);
+    robotPhysics.motorSpeeds.set(w1, rpm);
   } else if (up && right) {
-    robotPhysics.motorSpeeds.set('0', FORWARD_RPM);
-    robotPhysics.motorSpeeds.set('1', DIAGONAL_INNER_RPM);
+    robotPhysics.motorSpeeds.set(w0, rpm);
+    robotPhysics.motorSpeeds.set(w1, inner);
   } else if (down && left) {
-    robotPhysics.motorSpeeds.set('0', -DIAGONAL_INNER_RPM);
-    robotPhysics.motorSpeeds.set('1', -FORWARD_RPM);
+    robotPhysics.motorSpeeds.set(w0, -inner);
+    robotPhysics.motorSpeeds.set(w1, -rpm);
   } else if (down && right) {
-    robotPhysics.motorSpeeds.set('0', -FORWARD_RPM);
-    robotPhysics.motorSpeeds.set('1', -DIAGONAL_INNER_RPM);
+    robotPhysics.motorSpeeds.set(w0, -rpm);
+    robotPhysics.motorSpeeds.set(w1, -inner);
   } else if (up) {
-    robotPhysics.motorSpeeds.set('0', FORWARD_RPM);
-    robotPhysics.motorSpeeds.set('1', FORWARD_RPM);
+    robotPhysics.motorSpeeds.set(w0, rpm);
+    robotPhysics.motorSpeeds.set(w1, rpm);
   } else if (down) {
-    robotPhysics.motorSpeeds.set('0', -FORWARD_RPM);
-    robotPhysics.motorSpeeds.set('1', -FORWARD_RPM);
+    robotPhysics.motorSpeeds.set(w0, -rpm);
+    robotPhysics.motorSpeeds.set(w1, -rpm);
   } else if (left) {
-    robotPhysics.motorSpeeds.set('0', -TURN_RPM);
-    robotPhysics.motorSpeeds.set('1', TURN_RPM);
+    robotPhysics.motorSpeeds.set(w0, -rpm);
+    robotPhysics.motorSpeeds.set(w1, rpm);
   } else if (right) {
-    robotPhysics.motorSpeeds.set('0', TURN_RPM);
-    robotPhysics.motorSpeeds.set('1', -TURN_RPM);
+    robotPhysics.motorSpeeds.set(w0, rpm);
+    robotPhysics.motorSpeeds.set(w1, -rpm);
   } else {
-    robotPhysics.motorSpeeds.set('0', 0);
-    robotPhysics.motorSpeeds.set('1', 0);
+    robotPhysics.motorSpeeds.set(w0, 0);
+    robotPhysics.motorSpeeds.set(w1, 0);
   }
 }
 
@@ -339,6 +355,11 @@ async function handleStart(payload: { robotSpec: RobotSpec; mazeGrid: MazeGrid; 
   try {
     await initMicroPython();
     await runUserCode(payload.pythonCode);
+
+    // Wait for any remaining pending moves (safety net for sync fallback)
+    while (pendingMoves.length > 0 && isRunning && !isFinished) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
 
     if (isRunning && !isFinished) {
       isRunning = false;

@@ -26,46 +26,30 @@ export function applyMotorForces(
 
   const forceDir = { x: Math.sin(angle), y: -Math.cos(angle) };
 
-  // Matter.js Body.update: body.velocity = prevVel * frictionAir + (F/m) * deltaTime²
-  // where deltaTime is in ms (16.67) and deltaTime² = 277.78
-  // body.velocity is displacement PER TICK (not per second)
   const dtMs = dt * 1000;
   const dtSq = dtMs * dtMs;
 
   for (const wheel of spec.wheels) {
-    const motor = spec.motors[wheel.motorId];
-    if (!motor) continue;
+    const cmdRPM = robotState.motorSpeeds.get(wheel.id) ?? 0;
+    const clampedRPM = Math.sign(cmdRPM) * Math.min(Math.abs(cmdRPM), wheel.maxRPM);
+    const wheelRPM = clampedRPM / wheel.gearRatio;
 
-    const targetRPM = robotState.motorSpeeds.get(String(wheel.motorId)) ?? 0;
-
-    // Target velocity: mm/s → mm/tick (Matter.js native velocity unit)
     const circumference = 2 * Math.PI * wheel.radius;
-    const targetLinearVel = (targetRPM / 60) * circumference;
+    const targetLinearVel = (wheelRPM / 60) * circumference;
     const targetPerTick = targetLinearVel * dt;
 
-    // Current velocity from Matter.js body (already in mm/tick)
     const currentPerTick = dotProduct(body.velocity, forceDir);
 
-    // Velocity error in mm/tick
     const velError = targetPerTick - currentPerTick;
 
-    // PD controller: F = Kp * error * mass / dtSq
-    // This counteracts Matter.js's (F/m) * dtSq integration
-    // Kp < 1 for stable exponential approach (corrects fraction of error per tick)
     const Kp = 0.3;
     const pdForce = Kp * velError * body.mass / dtSq;
 
-    // Max motor torque force at wheel, also scaled for Matter.js dt²
-    const maxMotorForce = motor.maxTorque / wheel.radius / dtSq;
+    const effectiveTorque = wheel.maxTorque * wheel.gearRatio;
+    const maxMotorForce = effectiveTorque / wheel.radius / dtSq;
     const clampedForce = Math.max(-maxMotorForce, Math.min(maxMotorForce, pdForce));
 
-    // Wheel offset: left/right from center (differential drive)
-    const wheelPos = wheel.position ?? {
-      x: wheel.motorId === 0 ? -wheel.distanceFromCenter : wheel.distanceFromCenter,
-      y: 0,
-    };
-
-    const wheelWorldPos = localToWorld(body, wheelPos);
+    const wheelWorldPos = localToWorld(body, wheel.position);
 
     Matter.Body.applyForce(body, wheelWorldPos, {
       x: forceDir.x * clampedForce,

@@ -1,14 +1,68 @@
 .app-container {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   background-color: #1f2937;
 }
 
-.config-panel {
-  width: 256px;
-  background-color: #111827;
-  border-right: 1px solid #374151;
-  overflow-y: auto;
+.app-tabs {
+  display: flex;
+  height: 40px;
+  background: #111827;
+  border-bottom: 1px solid #374151;
+  flex-shrink: 0;
+}
+
+.app-tab {
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.app-tab:hover {
+  color: #e5e7eb;
+  background: #1f2937;
+}
+
+.app-tab.active {
+  color: #60a5fa;
+  border-bottom-color: #3b82f6;
+  background: #1f2937;
+}
+
+.app-content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  position: relative;
+}
+
+.tab-panel {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.tab-panel.active {
+  visibility: visible;
+  pointer-events: auto;
+  position: relative;
+}
+
+.config-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 .canvas-panel {
@@ -54,9 +108,13 @@
 }
 
 .code-panel {
-  width: 380px;
+  width: 30%;
+  min-width: 300px;
+  max-width: 500px;
   background-color: #111827;
-  border-left: 1px solid #374151;
+  border-right: 1px solid #374151;
+  display: flex;
+  flex-direction: column;
 }
 
 .code-panel .blockly-workspace {
@@ -110,4 +168,291 @@
 
 .run-btn-reset:hover {
   background-color: #4b5563;
+}
+
+.robot-config-panel {
+  width: 50%;
+  max-width: 480px;
+  min-width: 340px;
+  background: #111827;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #374151;
+}
+
+.config-sub-tabs {
+  display: flex;
+  border-bottom: 1px solid #374151;
+  flex-shrink: 0;
+}
+
+.config-sub-tab {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.config-sub-tab:hover {
+  color: #e5e7eb;
+  background: #1f2937;
+}
+
+.config-sub-tab.active {
+  color: #60a5fa;
+  border-bottom-color: #3b82f6;
+  background: #1f2937;
+}
+
+.config-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.config-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.config-field-inline {
+  flex: 1;
+}
+
+.config-label {
+  width: 100px;
+  font-size: 12px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.config-input {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #e5e7eb;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.config-input:focus {
+  border-color: #3b82f6;
+}
+
+.config-input-sm {
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+select.config-input {
+  cursor: pointer;
+}
+
+.config-card {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.config-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.config-header-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.btn-collapse {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid #4b5563;
+  color: #9ca3af;
+  border-radius: 4px;
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.btn-collapse:hover {
+  border-color: #6b7280;
+  color: #e5e7eb;
+}
+
+.btn-remove {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid #dc2626;
+  color: #dc2626;
+  border-radius: 4px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.btn-remove:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-remove-sm {
+  width: 24px;
+  height: 24px;
+}
+
+.btn-add {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #60a5fa;
+  background: transparent;
+  border: 1px dashed #374151;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-add:hover {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.btn-add:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-add-sm {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.config-errors {
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid #dc2626;
+  border-radius: 4px;
+}
+
+.config-footer {
+  flex-shrink: 0;
+  border-top: 1px solid #374151;
+  padding: 8px 12px;
+}
+
+.preset-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn-import-export {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #9ca3af;
+  background: transparent;
+  border: 1px solid #4b5563;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-import-export:hover {
+  color: #e5e7eb;
+  border-color: #6b7280;
+  background: rgba(107, 114, 128, 0.1);
+}
+
+.btn-import-export:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.config-label {
+  position: relative;
+}
+
+.label-tooltip {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  width: 240px;
+  padding: 8px 10px;
+  background: #1f2937;
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #d1d5db;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-weight: normal;
+  pointer-events: none;
+}
+
+.config-label:hover .label-tooltip {
+  display: block;
+}
+
+.label-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 12px;
+  border: 6px solid transparent;
+  border-bottom-color: #4b5563;
+}
+
+.robot-preview {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1f2937;
+  padding: 24px;
+}
+
+.robot-preview svg {
+  max-width: 100%;
+  max-height: 100%;
 }

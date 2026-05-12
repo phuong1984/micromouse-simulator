@@ -7,20 +7,18 @@ export interface BaseSpec {
   width: number;
   height: number;
   mass: number;
-}
-
-export interface MotorSpec {
-  name: string;
-  maxSpeed: number;
-  maxTorque: number;
+  shape?: 'rectangle' | 'circle';
 }
 
 export interface WheelSpec {
+  id: string;
+  position: Vector2D;
   radius: number;
-  distanceFromCenter: number;
-  motorId: number;
+  width: number;
+  maxRPM: number;
+  maxTorque: number;
+  gearRatio: number;
   frictionCoeff?: number;
-  position?: Vector2D;
 }
 
 export interface SensorSpec {
@@ -28,14 +26,15 @@ export interface SensorSpec {
   type: 'IR' | 'Ultrasonic' | 'Encoder';
   position: Vector2D;
   angle: number;
-  range: number;
+  maxRange: number;
   fov?: number;
   noiseLevel?: number;
 }
 
 export interface RobotSpec {
+  id?: string;
+  name?: string;
   base: BaseSpec;
-  motors: MotorSpec[];
   wheels: WheelSpec[];
   sensors: SensorSpec[];
 }

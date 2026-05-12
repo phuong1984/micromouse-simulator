@@ -83,23 +83,23 @@ export class SensorSimulator {
   private readSensor(sensor: SensorSpec, robotX: number, robotY: number, robotAngle: number): number {
     const cos = Math.cos(robotAngle);
     const sin = Math.sin(robotAngle);
-    const wx = robotX + sensor.position.x * cos - sensor.position.y * sin;
-    const wy = robotY + sensor.position.x * sin + sensor.position.y * cos;
+    const wx = robotX + sensor.position.x * cos + sensor.position.y * sin;
+    const wy = robotY + sensor.position.x * sin - sensor.position.y * cos;
 
     const fov = sensor.fov ?? 0;
     const numRays = fov > 0 ? 5 : 1;
-    let minDist = sensor.range;
+    let minDist = sensor.maxRange;
 
     for (let i = 0; i < numRays; i++) {
       const spreadOffset = numRays === 1 ? 0 : ((i / (numRays - 1)) - 0.5) * (fov * Math.PI / 180);
       const worldAngle = robotAngle + (sensor.angle * Math.PI / 180) + spreadOffset;
-      const dist = castRay(wx, wy, worldAngle, this.wallSegments, sensor.range);
+      const dist = castRay(wx, wy, worldAngle, this.wallSegments, sensor.maxRange);
       if (dist >= 0 && dist < minDist) {
         minDist = dist;
       }
     }
 
-    if (minDist >= sensor.range) return -1;
+    if (minDist >= sensor.maxRange) return -1;
 
     const noiseLevel = sensor.noiseLevel ?? 0;
     if (noiseLevel > 0) {

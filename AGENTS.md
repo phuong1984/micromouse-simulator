@@ -82,7 +82,7 @@ index.html, package.json, etc.
 
 ## Current Phase & Status
 
-**Current Phase**: 6 — Robot Config UI
+**Current Phase**: 7 — Maze Editor
 
 | Phase | Status |
 |-------|--------|
@@ -92,9 +92,9 @@ index.html, package.json, etc.
 | 3 | MicroPython Execution Engine | ✅ Hoàn |
 | 4 | Physics & Simulation Loop | ✅ Hoàn |
 | 5 | Sensor Simulation | ✅ Hoàn |
-| 5.5 | Integration | ⬜ |
-| 6 | Robot Config UI | ⬜ Đang làm |
-| 7 | Maze Editor | ⬜ |
+| 5.5 | Integration | ✅ Hoàn |
+| 6 | Robot Config UI | ✅ Hoàn |
+| 7 | Maze Editor | ⬜ Đang làm |
 | 8 | Telemetry & Replay | ⬜ |
 | 9 | Polish & Education | ⬜ |
 
@@ -165,8 +165,9 @@ Check `plan/00_TRACKING.md` for detailed status.
 ```typescript
 Wall: NORTH=8, EAST=4, SOUTH=2, WEST=1 (bitmask)
 MazeGrid: { rows, cols, cellSize:180, wallThickness:12, cells:number[][], start:CellPos, goal:CellPos }
-RobotSpec: { base:BaseSpec, motors:MotorSpec[], wheels:WheelSpec[], sensors:SensorSpec[] }
-SensorSpec: { id, type, position, angle, range, fov?, noiseLevel? }
+RobotSpec: { base:BaseSpec, wheels:WheelSpec[], sensors:SensorSpec[] }
+WheelSpec: { id, position, radius, width, maxRPM, maxTorque, gearRatio, frictionCoeff }
+SensorSpec: { id, type, position, angle, maxRange, fov?, noiseLevel? }
 SimState: { tick, robot{x,y,angle,vx,vy,av}, sensors:Record<string,number>, motorRPMs, isFinished, elapsedMs }
 WallSegment: { x, y, width, height, angle } // mm
 MainToWorker: { type:'START'|'STOP'|'STEP'|'RESET'|'KEYBOARD', payload? }
@@ -177,7 +178,7 @@ WorkerToMain: { type:'STATE_UPDATE'|'FINISHED'|'PYTHON_ERROR'|'WORKER_ERROR'|'RE
 
 1. Đọc `SESSION_BRIEF.md` để biết mục tiêu session hiện tại
 2. Đọc `plan/00_TRACKING.md` để biết status tổng thể
-3. Đọc file plan của phase đang làm (VD: `plan/06_PHASE_6_ROBOT_CONFIG.md`)
+3. Đọc file plan của phase đang làm (VD: `plan/06_PHASE_7_MAZE_EDITOR.md`)
 4. Làm theo tasks từ trên xuống, verify `npm run build && npm run lint` sau mỗi task
 5. Cập nhật checklist trong file plan + `00_TRACKING.md` khi hoàn thành
 6. Gặp vấn đề → check `docs/micromouse_docs/` gốc

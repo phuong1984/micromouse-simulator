@@ -9,14 +9,14 @@
 
 ## Completed: ✅
 
-- [ ] 6.1 — Config panel layout (Tailwind)
-- [ ] 6.2 — SVG preview component
-- [ ] 6.3 — CRUD: add/remove motors, wheels, sensors
-- [ ] 6.4 — Base config fields
-- [ ] 6.5 — Validation rules
-- [ ] 6.6 — Sensor ID ↔ Blockly dropdown sync
-- [ ] 6.7 — Save/load presets
-- [ ] 6.8 — Config disabled khi sim running
+- [x] 6.1 — Config panel layout (Tailwind)
+- [x] 6.2 — SVG preview component
+- [x] 6.3 — CRUD: add/remove motors, wheels, sensors
+- [x] 6.4 — Base config fields
+- [x] 6.5 — Validation rules
+- [x] 6.6 — Sensor ID ↔ Blockly dropdown sync
+- [x] 6.7 — Save/load presets (basic done, needs polish)
+- [x] 6.8 — Config disabled khi sim running
 
 ---
 
@@ -81,15 +81,30 @@ Validation:
 ```typescript
 function validateRobotSpec(spec: RobotSpec): ValidationError[] {
   const errors = [];
-  if (spec.base.width < 20 || spec.base.width > 200)
-    errors.push({ field: 'base.width', message: 'Width phải từ 20–200mm' });
-  if (spec.motors.length === 0)
-    errors.push({ field: 'motors', message: 'Cần ít nhất 1 motor' });
+  if (spec.base.width < 20 || spec.base.width > 180)
+    errors.push({ field: 'base.width', message: 'Width must be 20–180mm' });
+  if (spec.base.height < 20 || spec.base.height > 180)
+    errors.push({ field: 'base.height', message: 'Height must be 20–180mm' });
   if (spec.wheels.length === 0)
-    errors.push({ field: 'wheels', message: 'Cần ít nhất 1 bánh xe' });
+    errors.push({ field: 'wheels', message: 'Need at least 1 wheel' });
+
+  const hw = spec.base.width / 2;
+  const hh = spec.base.height / 2;
   spec.wheels.forEach(w => {
-    if (!spec.motors.find(m => m.id === w.motorId))
-      errors.push({ field: `wheel.${w.id}`, message: `Motor '${w.motorId}' không tồn tại` });
+    if (w.position.x < -hw || w.position.x > hw)
+      errors.push({ field: `wheel.${w.id}.posX`, message: `Pos X must be ${-hw}–${hw}mm` });
+    if (w.position.y < -hh || w.position.y > hh)
+      errors.push({ field: `wheel.${w.id}.posY`, message: `Pos Y must be ${-hh}–${hh}mm` });
+    if (w.radius < 1 || w.radius > 50)
+      errors.push({ field: `wheel.${w.id}.radius`, message: `Radius must be 1–50mm` });
+    // ... wheel fields: maxRPM, maxTorque, gearRatio, frictionCoeff
+  });
+  spec.sensors.forEach(sen => {
+    if (sen.position.x < -hw || sen.position.x > hw)
+      errors.push({ field: `sensor.${sen.id}.posX`, ... });
+    if (sen.maxRange < 1 || sen.maxRange > 180) ...
+    if (sen.fov != null && (sen.fov < 1 || sen.fov > 90)) ...
+    // duplicate sensor ID check
   });
   return errors;
 }

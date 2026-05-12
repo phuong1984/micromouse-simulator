@@ -5,49 +5,36 @@
 ---
 
 - **Date**: 2026-05-12
-- **Current Phase**: Phase 6 — Robot Config UI
-- **Phase Plan**: `plan/06_PHASE_6_ROBOT_CONFIG.md`
-- **Current Tasks**: 6.1 → 6.8
+- **Current Phase**: Phase 6 — Robot Config UI (done) → Phase 7 next
+- **Phase Plan**: `plan/06_PHASE_6_ROBOT_CONFIG.md` ✅
+- **Current Tasks**: Phase 6 completed, minor validation fixes done
 
 ## Last Session Recap
 
-**Phase 5 hoàn tất — Sensor Simulation (2026-05-12).**
+**Session 9 — Phase 6 cleanup + validation fixes.**
 
 **What was done:**
-- `sensorSimulator.ts` — ray casting, Box-Muller noise, FOV multi-ray, `get_sensor` on-the-fly
-- Worker integration — SensorSimulator in tick loop, sensor readings in STATE_UPDATE
-- Renderer — `drawSensorRays()` xanh/đỏ + dot tại hit point
-- Toggle — "Show sensor rays" checkbox
-- Cleanup — removed `[stop]`, `[set_motor_speeds]`, collision debug logs
+- Base width/height max: 200 → 180 (phù hợp cell maze 180mm)
+- Wheel position X/Y: min/max clamped to ±base.width/2, ±base.height/2
+- Sensor position X/Y: same clamping
+- Sensor maxRange max: 360 → 180
+- Sensor FOV max: 360 → 90
+- Validation.ts updated for all above bounds
+- Updated all docs: SESSION_BRIEF, TRACKING, plan, CONFIG_EFFECTS
 
 **State hiện tại:**
 - `npm run build` ✅, `npm run lint` ✅
-- Robot di chuyển + sensor rays visualization + Python API returns real mm readings
-- Motor model + sensor model đều data-driven từ RobotSpec
+- Phase 6 fully complete
+- Ready for Phase 7 (Maze Editor)
 
-## Today's Goal
+## Next Goal
 
-Bắt đầu Phase 6 — Robot Config UI:
-- 6.1: Config panel layout (tabs: Base / Motors / Wheels / Sensors)
-- 6.2: SVG preview component (top-down robot view)
-- 6.3: CRUD add/remove motors, wheels, sensors
-- 6.4: Base config fields + validation
-- 6.5: Validation rules before Run
-- 6.6: Sensor ID ↔ Blockly dropdown sync
-- 6.7: Save/load presets (localStorage)
-- 6.8: Config disabled khi sim running
+Start Phase 7 — Maze Editor.
 
 ## Starting Point
 
 - `npm run build` pass, `npm run lint` pass
-- Phase 5 hoàn tất: physics + sensors + Python API
-- Config panel hiện tại là empty `<aside>`:
-
-```html
-<aside className="config-panel p-4">
-  <h2 className="text-white text-lg font-bold">Robot Config</h2>
-</aside>
-```
+- All config validation ranges updated
 
 ## Blockers
 
@@ -55,7 +42,6 @@ Bắt đầu Phase 6 — Robot Config UI:
 
 ## Notes
 
-- Cần tạo `robotConfigStore` (Zustand) cho config state
-- Simulation store cần lấy `robotSpec` từ config store thay vì `DEFAULT_ROBOT` hardcoded
-- SVG preview có thể dùng inline SVG hoặc PixiJS (prefer inline SVG cho đơn giản)
-- Dynamic Blockly dropdown: update toolbox khi sensor IDs thay đổi
+- Phase 6 tasks 6.1–6.8 all done
+- MotorSpec merged into WheelSpec (no separate motors array)
+- Phase 7: click toggle wall, drag draw, start/goal, undo/redo, preset selector, BFS validation, serialize

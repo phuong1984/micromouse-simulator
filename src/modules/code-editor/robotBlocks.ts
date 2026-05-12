@@ -3,6 +3,26 @@ import { pythonGenerator, Order } from 'blockly/python';
 
 let registered = false;
 
+const _sensorOptions = {
+  items: [['front', 'front'], ['left', 'left'], ['right', 'right']] as [string, string][],
+};
+
+const _wheelOptions = {
+  items: [['wheel-left', 'wheel-left'], ['wheel-right', 'wheel-right']] as [string, string][],
+};
+
+export function updateSensorDropdowns(ids: string[]): void {
+  _sensorOptions.items = ids.length > 0
+    ? ids.map(id => [id, id] as [string, string])
+    : [['(no sensors)', '']];
+}
+
+export function updateWheelDropdowns(ids: string[]): void {
+  _wheelOptions.items = ids.length > 0
+    ? ids.map(id => [id, id] as [string, string])
+    : [['(no wheels)', '']];
+}
+
 export function registerRobotBlocks(): void {
   if (registered) return;
   registered = true;
@@ -19,7 +39,7 @@ export function registerRobotBlocks(): void {
       this.setInputsInline(true);
       this.setPreviousStatement(true);
       this.setNextStatement(true);
-      this.setColour(230); // Blue to distinguish from Green Loops
+      this.setColour(230);
       this.setTooltip('Move forward a specific distance (mm)');
     }
   };
@@ -54,35 +74,29 @@ export function registerRobotBlocks(): void {
     }
   };
 
-  Blockly.Blocks['robot_set_motors'] = {
+  Blockly.Blocks['robot_set_wheel_speed'] = {
     init: function() {
-      this.appendValueInput('LEFT_RPM')
+      this.appendDummyInput()
+          .appendField('Set speed of')
+          .appendField(new Blockly.FieldDropdown(() => _wheelOptions.items), 'WHEEL_ID');
+      this.appendValueInput('RPM')
           .setCheck('Number')
-          .appendField('Set Motors: Left');
-      this.appendValueInput('RIGHT_RPM')
-          .setCheck('Number')
-          .appendField('RPM, Right');
+          .appendField('to');
       this.appendDummyInput()
           .appendField('RPM');
       this.setInputsInline(true);
       this.setPreviousStatement(true);
       this.setNextStatement(true);
       this.setColour(30);
-      this.setTooltip('Directly set motor speeds');
+      this.setTooltip('Set speed of a specific wheel');
     }
   };
 
   Blockly.Blocks['robot_get_sensor'] = {
     init: function() {
       this.appendDummyInput()
-          .appendField('Get Sensor')
-          .appendField(new Blockly.FieldDropdown([
-            ['Front', 'front'],
-            ['Left', 'left'],
-            ['Right', 'right'],
-            ['Front-Left', 'front-left'],
-            ['Front-Right', 'front-right'],
-          ]), 'SENSOR_ID');
+          .appendField('Get Distance [mm] from')
+          .appendField(new Blockly.FieldDropdown(() => _sensorOptions.items), 'SENSOR_ID');
       this.setOutput(true, 'Number');
       this.setColour(210);
       this.setTooltip('Get distance from sensor (mm), -1 if none');
@@ -93,11 +107,7 @@ export function registerRobotBlocks(): void {
     init: function() {
       this.appendDummyInput()
           .appendField('Wall Detected at')
-          .appendField(new Blockly.FieldDropdown([
-            ['Front', 'front'],
-            ['Left', 'left'],
-            ['Right', 'right'],
-          ]), 'DIRECTION')
+          .appendField(new Blockly.FieldDropdown(() => _sensorOptions.items), 'DIRECTION')
           .appendField('within')
           .appendField(new Blockly.FieldNumber(100, 10, 500), 'THRESHOLD')
           .appendField('mm');
@@ -111,24 +121,24 @@ export function registerRobotBlocks(): void {
 
   pythonGenerator.forBlock['robot_move'] = function (block: Blockly.Block) {
     const distance = pythonGenerator.valueToCode(block, 'DISTANCE', Order.ATOMIC) || '180';
-    return `robot.move(${distance})\n`;
+    return `await robot.move(${distance})\n`;
   };
 
   pythonGenerator.forBlock['robot_turn'] = function (block: Blockly.Block) {
     const dir = block.getFieldValue('DIRECTION') as string;
     const angle = block.getFieldValue('ANGLE') as number;
     const signedAngle = dir === 'LEFT' ? -angle : angle;
-    return `robot.turn(${signedAngle})\n`;
+    return `await robot.turn(${signedAngle})\n`;
   };
 
   pythonGenerator.forBlock['robot_stop'] = function (_block: Blockly.Block) {
     return `robot.stop()\n`;
   };
 
-  pythonGenerator.forBlock['robot_set_motors'] = function (block: Blockly.Block) {
-    const left = pythonGenerator.valueToCode(block, 'LEFT_RPM', Order.ATOMIC) || '0';
-    const right = pythonGenerator.valueToCode(block, 'RIGHT_RPM', Order.ATOMIC) || '0';
-    return `robot.set_motor_speeds(${left}, ${right})\n`;
+  pythonGenerator.forBlock['robot_set_wheel_speed'] = function (block: Blockly.Block) {
+    const wheelId = block.getFieldValue('WHEEL_ID') as string;
+    const rpm = pythonGenerator.valueToCode(block, 'RPM', Order.ATOMIC) || '0';
+    return `robot.set_wheel_speed('${wheelId}', ${rpm})\n`;
   };
 
   pythonGenerator.forBlock['robot_get_sensor'] = function (block: Blockly.Block) {

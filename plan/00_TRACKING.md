@@ -1,6 +1,6 @@
 # Project Tracking — Master Status
 
-> Cập nhật lần cuối: 2026-05-11
+> Cập nhật lần cuối: 2026-05-12 (Session 9)
 
 ---
 
@@ -15,7 +15,7 @@
 | 4 | Physics & Simulation Loop | 8 | 8h | ✅ Hoàn |
 | 5 | Sensor Simulation | 8 | 8h | ✅ Hoàn |
 | 5.5 | Integration | 4 | 3h | ⬜ Chưa bắt đầu |
-| 6 | Robot Config UI | 8 | 8h | ⬜ Đang làm |
+| 6 | Robot Config UI | 8 | 8h | ✅ Hoàn — tasks 6.1–6.8 done |
 | 7 | Maze Editor | 7 | 8.5h | ⬜ Chưa bắt đầu |
 | 8 | Telemetry & Replay | 10 | 9h | ⬜ Chưa bắt đầu |
 | 9 | Polish & Education | 8 | 11h | ⬜ Chưa bắt đầu |
@@ -149,6 +149,35 @@
 - **Cleanup**: Xóa `useCallback` import không cần thiết, convert `syncWorkspace` thành regular function
 - **Docs update**: Cập nhật `00_TRACKING.md`, `SESSION_BRIEF.md`, `TODO.md`; đánh dấu `plan/02_PHASE_2_BLOCKLY_PYTHON.md` là obsolete
 - **Build status**: `npm run build` + `npm run lint` pass, sẵn sàng cho Phase 3
+
+### 2026-05-12 (Session 8) — Phase 6 Robot Config UI
+- **Created robot-config/store.ts**: Zustand store with spec + CRUD (add/update/remove) for motors, wheels, sensors + base update + preset save/load/delete with localStorage
+- **Created robot-config/validation.ts**: validateRobotSpec() — range checks, motor/wheel linkage, duplicate sensor IDs
+- **Created robot-config/RobotPreview.tsx**: SVG top-down preview — cell 180×180mm, base rect/circle, motor dots, wheel rects, sensor dots + arrow + FOV cone
+- **Created robot-config/RobotConfig.tsx**: Config form with sub-tabs (Base/Motors/Wheels/Sensors) + NumberField/SelectField components + preset dropdown + save/load/delete
+- **Updated robot-config/index.ts**: exports store, components, validation
+- **Updated App.tsx**: 2-tab navigation (Config/Simulation) — config shows RobotConfig + RobotPreview side-by-side; simulation shows code (left 30%) + canvas (right 70%)
+- **Updated App.css**: New layout — app-tabs, config-layout, config-panel styling, card-based form sections, preset management
+- **Updated simulation/store.ts**: Uses `useRobotConfigStore.getState().spec` instead of hardcoded DEFAULT_ROBOT — custom robot config flows into simulation
+- **Phase 6 tasks completed**: 6.1 (layout), 6.2 (SVG preview), 6.3 (CRUD), 6.4 (base fields), 6.5 (validation)
+- **Phase 6 remaining completed (2026-05-12)**: 6.6, 6.7, 6.8
+  - **6.6**: Dynamic Blockly sensor dropdown — `robotBlocks.ts` exports `updateSensorDropdowns()`, `App.tsx` subscribes to sensor changes and syncs to `robot_get_sensor` and `robot_wall_detected` blocks via `menuGenerator`
+  - **6.7**: Presets polish — "Default" button loads DEFAULT_ROBOT, Save button disabled when name empty, all preset controls disabled during simulation
+  - **6.8**: Config disabled when running — `simStatus` from simulation store, `disabled={running}` passed to all NumberField/SelectField components and buttons
+- **Front sensor bug fix**: Negated Y in `sensorSimulator.ts:readSensor()` coordinate conversion (`+ sY * sin` / `- sY * cos`) so spec Y+ = forward maps to physics -Y at angle=0
+- **Verify**: `npm run build` ✅, `npm run lint` ✅
+
+### 2026-05-12 (Session 9) — Phase 6 Cleanup + Validation Fixes
+
+- **Base width/height max 200→180**: validation.ts + RobotConfig.tsx NumberField max props updated
+- **Wheel pos X/Y clamping**: `min={-spec.base.width/2} max={spec.base.width/2}`, same for Y
+- **Sensor pos X/Y clamping**: same bounds as wheels (within base dimensions)
+- **Sensor maxRange max=180**: NumberField + validation updated
+- **Sensor FOV max=90**: NumberField `max={360}→{90}`, validation added
+- **Validation.ts expanded**: wheel position, sensor position, sensor maxRange, sensor fov bounds
+- **Docs updated**: SESSION_BRIEF.md, plan/06_PHASE_6_ROBOT_CONFIG.md, docs/CONFIG_EFFECTS.md, 00_TRACKING.md
+- **Phase 6 CHÍNH THỨC HOÀN TẤT**: tasks 6.1–6.8 + all validation cleanup
+- **Verify**: `npm run build` ✅, `npm run lint` ✅
 
 ### 2026-05-09 (Session 2) — Phase 1 Finalization
 - **Task 1.2 COMPLETED**: Draw maze walls (dùng WALL constants, outer boundaries) + start/goal markers

@@ -15,7 +15,7 @@ function wrapPythonCode(code: string): string {
     .split('\n')
     .map((line) => (line ? `    ${line}` : ''))
     .join('\n');
-  return `def solve(robot):\n${indented}\n\nsolve(robot)`;
+  return `async def solve():\n${indented}\n\nawait solve()`;
 }
 
 export function BlocklyEditor() {

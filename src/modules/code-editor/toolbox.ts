@@ -24,18 +24,12 @@ export const ROBOT_TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
         { kind: 'block', type: 'robot_stop' },
         {
           kind: 'block',
-          type: 'robot_set_motors',
+          type: 'robot_set_wheel_speed',
           inputs: {
-            LEFT_RPM: {
+            RPM: {
               shadow: {
                 type: 'math_number',
-                fields: { NUM: 1200 },
-              },
-            },
-            RIGHT_RPM: {
-              shadow: {
-                type: 'math_number',
-                fields: { NUM: 1200 },
+                fields: { NUM: 500 },
               },
             },
           },

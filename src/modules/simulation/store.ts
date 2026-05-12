@@ -3,7 +3,7 @@ import type { SimState } from '../../shared/types/simulation';
 import type { MainToWorker, WorkerToMain } from '../../shared/types/workerMessages';
 import { useCodeEditorStore } from '../code-editor/store';
 import { useTelemetryStore } from '../telemetry/store';
-import { DEFAULT_ROBOT } from '../../shared/constants/robot-presets';
+import { useRobotConfigStore } from '../robot-config/store';
 import { MAZE_5x5_SIMPLE } from '../../shared/constants/maze-presets';
 
 export type SimStatus = 'idle' | 'running' | 'finished' | 'error';
@@ -73,7 +73,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
             type: 'START',
             payload: {
               pythonCode,
-              robotSpec: DEFAULT_ROBOT,
+              robotSpec: useRobotConfigStore.getState().spec,
               mazeGrid: MAZE_5x5_SIMPLE,
             },
           });

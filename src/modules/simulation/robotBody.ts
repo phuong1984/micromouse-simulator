@@ -12,7 +12,7 @@ export function createRobotBody(spec: RobotSpec, x: number, y: number): RobotPhy
 
   const body = Matter.Bodies.rectangle(x, y, width, height, {
     mass: mass / 1000,
-    frictionAir: 0.12,
+    frictionAir: 0.06,
     restitution: 0.1,
     label: 'robot',
     collisionFilter: { category: 0x0001, mask: 0x0002 },
@@ -20,7 +20,7 @@ export function createRobotBody(spec: RobotSpec, x: number, y: number): RobotPhy
 
   return {
     body,
-    motorSpeeds: new Map(spec.motors.map((_, i) => [String(i), 0])),
+    motorSpeeds: new Map(spec.wheels.map(w => [w.id, 0])),
   };
 }
 
