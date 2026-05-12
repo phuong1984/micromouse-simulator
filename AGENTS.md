@@ -47,6 +47,7 @@ src/
 │   │   ├── sensorSimulator.ts
 │   │   ├── simulationLoop.ts
 │   │   └── mazeToPhysics.ts
+│   │   └── store.ts
 │   ├── renderer/
 │   │   ├── SimulationRenderer.ts
 │   │   └── types.ts
@@ -81,7 +82,7 @@ index.html, package.json, etc.
 
 ## Current Phase & Status
 
-**Current Phase**: 5 — Sensor Simulation (bắt đầu)
+**Current Phase**: 6 — Robot Config UI
 
 | Phase | Status |
 |-------|--------|
@@ -90,9 +91,9 @@ index.html, package.json, etc.
 | 2 | Blockly + Python Codegen | ✅ Hoàn |
 | 3 | MicroPython Execution Engine | ✅ Hoàn |
 | 4 | Physics & Simulation Loop | ✅ Hoàn |
-| 5 | Sensor Simulation | ⬜ Đang làm |
+| 5 | Sensor Simulation | ✅ Hoàn |
 | 5.5 | Integration | ⬜ |
-| 6 | Robot Config UI | ⬜ |
+| 6 | Robot Config UI | ⬜ Đang làm |
 | 7 | Maze Editor | ⬜ |
 | 8 | Telemetry & Replay | ⬜ |
 | 9 | Polish & Education | ⬜ |
@@ -133,7 +134,7 @@ Check `plan/00_TRACKING.md` for detailed status.
 
 ### 4. Deterministic Simulation
 - Cùng input → cùng output (replay)
-- Không dùng `Date.now()` hay `Math.random()` trong simulation
+- Simulation không dùng `Math.random()` (noise chỉ trong sensor, có thể seed sau)
 
 ### 5. User Code Safety
 - Code chạy trong MicroPython sandbox (Worker)
@@ -145,11 +146,11 @@ Check `plan/00_TRACKING.md` for detailed status.
 - Comment tiếng Anh
 - Một file = một concern
 - Types define trong `shared/types/`, import lại — không define local
+- Hằng số thay vì magic numbers
 
 ### 7. Performance
 - PixiJS: reuse Graphics objects
 - Telemetry: debounce UI 30fps
-- Replay: sample 3 ticks (~20fps)
 - Zustand: không store non-serializable objects
 
 ### 8. Error Handling
@@ -165,17 +166,18 @@ Check `plan/00_TRACKING.md` for detailed status.
 Wall: NORTH=8, EAST=4, SOUTH=2, WEST=1 (bitmask)
 MazeGrid: { rows, cols, cellSize:180, wallThickness:12, cells:number[][], start:CellPos, goal:CellPos }
 RobotSpec: { base:BaseSpec, motors:MotorSpec[], wheels:WheelSpec[], sensors:SensorSpec[] }
+SensorSpec: { id, type, position, angle, range, fov?, noiseLevel? }
 SimState: { tick, robot{x,y,angle,vx,vy,av}, sensors:Record<string,number>, motorRPMs, isFinished, elapsedMs }
 WallSegment: { x, y, width, height, angle } // mm
-MainToWorker: { type:'START'|'STOP'|'STEP'|'RESET', payload? }
-WorkerToMain: { type:'STATE_UPDATE'|'FINISHED'|'PYTHON_ERROR'|'WORKER_ERROR', payload }
+MainToWorker: { type:'START'|'STOP'|'STEP'|'RESET'|'KEYBOARD', payload? }
+WorkerToMain: { type:'STATE_UPDATE'|'FINISHED'|'PYTHON_ERROR'|'WORKER_ERROR'|'READY', payload }
 ```
 
 ## How to Start a Session
 
 1. Đọc `SESSION_BRIEF.md` để biết mục tiêu session hiện tại
 2. Đọc `plan/00_TRACKING.md` để biết status tổng thể
-3. Đọc file plan của phase đang làm (VD: `plan/03_PHASE_2_BLOCKLY.md`)
+3. Đọc file plan của phase đang làm (VD: `plan/06_PHASE_6_ROBOT_CONFIG.md`)
 4. Làm theo tasks từ trên xuống, verify `npm run build && npm run lint` sau mỗi task
 5. Cập nhật checklist trong file plan + `00_TRACKING.md` khi hoàn thành
 6. Gặp vấn đề → check `docs/micromouse_docs/` gốc

@@ -5,55 +5,57 @@
 ---
 
 - **Date**: 2026-05-12
-- **Current Phase**: Phase 5 — Sensor Simulation
-- **Phase Plan**: `plan/05_PHASE_5_SENSORS.md`
-- **Current Tasks**: 5.1 → 5.8
+- **Current Phase**: Phase 6 — Robot Config UI
+- **Phase Plan**: `plan/06_PHASE_6_ROBOT_CONFIG.md`
+- **Current Tasks**: 6.1 → 6.8
 
 ## Last Session Recap
 
-**Phase 4 hoàn tất — tất cả bug fixes và cleanup done (2026-05-12).**
+**Phase 5 hoàn tất — Sensor Simulation (2026-05-12).**
 
-**Bugs fixed:**
-1. Robot body không được add vào Matter.js world (missing `Composite.add`)
-2. Matter.js Verlet dt² scaling — force phải scale với dtSq=277.78
-3. Wheel positions trên Y-offset → đúng X-offset cho differential drive
-4. `setAngularVelocity` damping vô hiệu, bị Body.update ghi đè — removed
-5. `maxTorque` 1.5→10 N·mm (terminal 90→600 mm/s)
-6. RPM magic numbers → constants (`FORWARD_RPM`, `TURN_RPM`, `DIAGONAL_INNER_RPM`)
-7. Blockly defaults 2400→1200 RPM
+**What was done:**
+- `sensorSimulator.ts` — ray casting, Box-Muller noise, FOV multi-ray, `get_sensor` on-the-fly
+- Worker integration — SensorSimulator in tick loop, sensor readings in STATE_UPDATE
+- Renderer — `drawSensorRays()` xanh/đỏ + dot tại hit point
+- Toggle — "Show sensor rays" checkbox
+- Cleanup — removed `[stop]`, `[set_motor_speeds]`, collision debug logs
 
 **State hiện tại:**
 - `npm run build` ✅, `npm run lint` ✅
-- Robot di chuyển, quay tại tâm, va chạm tường, goal detection
-- Motor model data-driven (sẵn sàng cho Phase 6 Robot Config)
-- SensorSimulator là stub — sẵn sàng cho Phase 5
+- Robot di chuyển + sensor rays visualization + Python API returns real mm readings
+- Motor model + sensor model đều data-driven từ RobotSpec
 
 ## Today's Goal
 
-Bắt đầu Phase 5 — Sensor Simulation:
-- Task 5.1: `castRay()` và `raySegmentIntersect()` — ray casting math
-- Task 5.2: `SensorSimulator` class — wallSegments + robot spec
-- Task 5.3: Gaussian noise (Box-Muller) cho readings
-- Task 5.4: FOV multi-ray casting trong cone
-- Task 5.5: Integrate sensorSim vào tick loop
-- Task 5.6: sensors field trong SimState
-- Task 5.7: Draw sensor rays trong PixiJS renderer
-- Task 5.8: Toggle checkbox "Hiển thị sensor rays"
+Bắt đầu Phase 6 — Robot Config UI:
+- 6.1: Config panel layout (tabs: Base / Motors / Wheels / Sensors)
+- 6.2: SVG preview component (top-down robot view)
+- 6.3: CRUD add/remove motors, wheels, sensors
+- 6.4: Base config fields + validation
+- 6.5: Validation rules before Run
+- 6.6: Sensor ID ↔ Blockly dropdown sync
+- 6.7: Save/load presets (localStorage)
+- 6.8: Config disabled khi sim running
 
 ## Starting Point
 
-- `npm run build` pass
-- `npm run lint` pass (0 errors)
-- Phase 4 physics hoạt động: robot di chuyển, va chạm, goal detection
-- Worker message protocol đã stable
+- `npm run build` pass, `npm run lint` pass
+- Phase 5 hoàn tất: physics + sensors + Python API
+- Config panel hiện tại là empty `<aside>`:
+
+```html
+<aside className="config-panel p-4">
+  <h2 className="text-white text-lg font-bold">Robot Config</h2>
+</aside>
+```
 
 ## Blockers
 
-- Need deterministic ray-tracing (không dùng `Math.random` cho noise nếu muốn deterministic replay)
+- None
 
 ## Notes
 
-- Wall segments từ `mazeToWallSegments()` — cần lưu để reuse trong raycasting
-- Noise: deterministic seed nếu replay yêu cầu (optional, có thể thêm sau)
-- Sensor rays render trong PixiJS overlay layer
-- Python API `robot.get_sensor(id)` trả về distance mm
+- Cần tạo `robotConfigStore` (Zustand) cho config state
+- Simulation store cần lấy `robotSpec` từ config store thay vì `DEFAULT_ROBOT` hardcoded
+- SVG preview có thể dùng inline SVG hoặc PixiJS (prefer inline SVG cho đơn giản)
+- Dynamic Blockly dropdown: update toolbox khi sensor IDs thay đổi

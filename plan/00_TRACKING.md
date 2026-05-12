@@ -13,9 +13,9 @@
 | 2 | Blockly + Python Codegen | 8 | 10h | ✅ Hoàn |
 | 3 | MicroPython Execution Engine | 9 | 10h | ✅ Hoàn |
 | 4 | Physics & Simulation Loop | 8 | 8h | ✅ Hoàn |
-| 5 | Sensor Simulation | 8 | 8h | ⬜ Chưa bắt đầu |
+| 5 | Sensor Simulation | 8 | 8h | ✅ Hoàn |
 | 5.5 | Integration | 4 | 3h | ⬜ Chưa bắt đầu |
-| 6 | Robot Config UI | 8 | 8h | ⬜ Chưa bắt đầu |
+| 6 | Robot Config UI | 8 | 8h | ⬜ Đang làm |
 | 7 | Maze Editor | 7 | 8.5h | ⬜ Chưa bắt đầu |
 | 8 | Telemetry & Replay | 10 | 9h | ⬜ Chưa bắt đầu |
 | 9 | Polish & Education | 8 | 11h | ⬜ Chưa bắt đầu |
@@ -31,8 +31,8 @@
 | 2 | 2 | Blockly → Python code gen | ✅ |
 | 3 | 3 | MicroPython execution engine + console + Run button | ✅ |
 | 4 | 4 | Physics engine + Matter.js tick loop + robot moves | ✅ |
-| 5 | 5 + 5.5 | Sensors + integration test | ⬜ |
-| 6 | 6 + 7 | Config + Maze editor | ⬜ |
+| 5 | 5 + 5.5 | Sensors + integration test | ✅ |
+| 6 | 6 + 7 | Config + Maze editor | 🔄 Sprint 6 |
 | 7 | 8 + 9 | Telemetry + Polish | ⬜ |
 
 ---
@@ -129,6 +129,19 @@
 - **Toolbox**: Blockly set_motors default RPM 2400→1200
 - **Phase 4 CHÍNH THỨC HOÀN TẤT**: Physics simulation (60fps) + keyboard + async robot API + goal detection + motor model data-driven
 - **Verify**: `npm run build` ✅, `npm run lint` ✅
+
+### 2026-05-12 (Session 7) — Phase 5 Sensor Simulation
+- **Task 5.1-5.2 COMPLETED**: `sensorSimulator.ts` rewritten with `castRay()`, `rayLineSegmentIntersect()`, `wallCorners()`, `SensorSimulator` class
+- **Task 5.3 COMPLETED**: `gaussianRandom()` Box-Muller transform, noise applied với stddev = distance × noiseLevel
+- **Task 5.4 COMPLETED**: FOV multi-ray casting (5 rays trong cone, take min)
+- **Task 5.5 COMPLETED**: SensorSimulator created trong `initPhysics()`, `sensorSim.update()` gọi mỗi tick sau `Engine.update`
+- **Task 5.6 COMPLETED**: `sensors` field trong SimState populated với real readings, `latestSensorReadings` cache cho Python API
+- **Task 5.7 COMPLETED**: `drawSensorRays()` trong PixiJS — lines từ sensor position, màu xanh (`0x44ff44`) nếu no hit, đỏ (`0xff4444`) nếu hit + dot tại hit point
+- **Task 5.8 COMPLETED**: Checkbox "Show sensor rays" trong canvas toolbar, `showSensorRays` state → RenderOptions
+- **Types added**: `SensorSpec.fov`, `SensorSpec.noiseLevel`
+- **Cleanup**: Removed `[stop]`, `[set_motor_speeds]`, collision debug logs; `get_sensor` now computes on-the-fly (không dùng cache) để trả về real-time reading ngay từ tick đầu
+- **Verify**: `npm run build` ✅, `npm run lint` ✅
+- **Phase 5 CHÍNH THỨC HOÀN TẤT**: Ray casting + noise + FOV + Python API + visualization + toggle
 
 ### 2026-05-11 (Session 4) — Phase 2 Polish
 - **Scrollbar fix**: Ẩn Blockly flyout scrollbar bằng CSS (`.blocklyFlyoutScrollbar { display: none }`)

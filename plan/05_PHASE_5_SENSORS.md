@@ -9,14 +9,14 @@
 
 ## Completed: ✅
 
-- [ ] 5.1 — castRay() và raySegmentIntersect()
-- [ ] 5.2 — SensorSimulator class
-- [ ] 5.3 — Gaussian noise
-- [ ] 5.4 — FOV multi-ray casting
-- [ ] 5.5 — Integrate vào tick loop
-- [ ] 5.6 — Sensors trong SimState
-- [ ] 5.7 — Render sensor rays trong PixiJS
-- [ ] 5.8 — Toggle sensor visualization
+- [x] 5.1 — castRay() và raySegmentIntersect()
+- [x] 5.2 — SensorSimulator class
+- [x] 5.3 — Gaussian noise
+- [x] 5.4 — FOV multi-ray casting
+- [x] 5.5 — Integrate vào tick loop
+- [x] 5.6 — Sensors trong SimState
+- [x] 5.7 — Render sensor rays trong PixiJS
+- [x] 5.8 — Toggle sensor visualization
 
 ---
 
@@ -184,16 +184,26 @@ private drawSensorRays(state: SimState, spec: RobotSpec) {
 
 ---
 
+## Post-Implementation Improvements
+
+- `get_sensor` changed from cache-based → on-the-fly computation (returns real-time reading even before first tick)
+- Removed verbose debug logging: `[stop]`, `[set_motor_speeds]`, collision wall logging
+- Added periodic sensor logging for keyboard test mode (`[sensors] front=xx left=yy right=zz` every 1s)
+- Label changed from Vietnamese → English: "Show sensor rays"
+
+---
+
 ## Acceptance Criteria
 
-- [ ] Sensor rays hiển thị đúng hướng, đúng chiều dài
-- [ ] Raycast trả về khoảng cách chính xác (so với thực tế mê cung)
-- [ ] Noise hoạt động — readings dao động nhẹ
-- [ ] FOV > 0: nhiều rays cast trong cone
-- [ ] Python: `robot.get_sensor('front')` trả về số chính xác (mm)
-- [ ] Python: `robot.get_sensor('left')` trả về -1 khi không có tường
-- [ ] Toggle hiển thị/ẩn sensor rays hoạt động
-- [ ] Performance: raycasting không gây lag (60fps)
+- [x] Sensor rays hiển thị đúng hướng, đúng chiều dài
+- [x] Raycast trả về khoảng cách chính xác (so với thực tế mê cung)
+- [x] Noise hoạt động — readings dao động nhẹ
+- [x] FOV > 0: nhiều rays cast trong cone
+- [x] Python: `robot.get_sensor('front')` trả về số chính xác (mm)
+- [x] Python: `robot.get_sensor('left')` trả về -1 khi không có tường
+- [x] Toggle hiển thị/ẩn sensor rays hoạt động
+- [x] Performance: raycasting không gây lag (60fps)
+- [x] `npm run build` ✅, `npm run lint` ✅
 
 ---
 

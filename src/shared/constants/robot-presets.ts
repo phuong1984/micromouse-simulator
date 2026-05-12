@@ -37,6 +37,8 @@ export const DEFAULT_ROBOT: RobotSpec = {
       position: { x: 35, y: 0 },
       angle: 0,
       range: 180,
+      fov: 10,
+      noiseLevel: 0.02,
     },
     {
       id: 'left',
@@ -44,6 +46,8 @@ export const DEFAULT_ROBOT: RobotSpec = {
       position: { x: 25, y: -15 },
       angle: -90,
       range: 180,
+      fov: 10,
+      noiseLevel: 0.02,
     },
     {
       id: 'right',
@@ -51,6 +55,8 @@ export const DEFAULT_ROBOT: RobotSpec = {
       position: { x: 25, y: 15 },
       angle: 90,
       range: 180,
+      fov: 10,
+      noiseLevel: 0.02,
     },
   ],
 };

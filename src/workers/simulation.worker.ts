@@ -6,6 +6,7 @@ import { createPhysicsWorld, addMazeWalls, addGoalZone, setupGoalDetection, PHYS
 import { createRobotBody, extractRobotState } from '../modules/simulation/robotBody';
 import type { RobotPhysicsState } from '../modules/simulation/robotBody';
 import { applyMotorForces } from '../modules/simulation/motorModel';
+import { SensorSimulator } from '../modules/simulation/sensorSimulator';
 import type { RobotSpec } from '../shared/types/robot';
 import type { MazeGrid } from '../shared/types/maze';
 import { cellToWorld, mazeToWallSegments } from '../shared/utils/maze';
@@ -14,6 +15,7 @@ import wasmUrl from '@micropython/micropython-webassembly-pyscript/micropython.w
 let engine: Matter.Engine | null = null;
 let robotPhysics: RobotPhysicsState | null = null;
 let robotSpec: RobotSpec | null = null;
+let sensorSim: SensorSimulator | null = null;
 let isRunning = false;
 let isFinished = false;
 let tickCount = 0;
@@ -78,10 +80,25 @@ function normalizeAngle(a: number): number {
 function tick() {
   if (!isRunning || isFinished || !engine || !robotPhysics || !robotSpec) return;
 
+  let sensorReadings: Record<string, number> = {};
   try {
     applyMotorForces(engine, robotPhysics, robotSpec, PHYSICS_TIMESTEP_MS / 1000);
     Matter.Engine.update(engine, PHYSICS_TIMESTEP_MS);
     checkPendingMoves();
+    if (sensorSim) {
+      sensorReadings = sensorSim.update(
+        robotPhysics.body.position.x,
+        robotPhysics.body.position.y,
+        robotPhysics.body.angle,
+      );
+      if (tickCount % 60 === 0) {
+        const parts: string[] = [];
+        for (const [id, val] of Object.entries(sensorReadings)) {
+          parts.push(`${id}=${val}`);
+        }
+        logBuffer.push(`[sensors] ${parts.join('  ')}`);
+      }
+    }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     logBuffer.push(`[physics error] ${message}`);
@@ -104,7 +121,7 @@ function tick() {
       state: {
         tick: tickCount++,
         robot: state,
-        sensors: {},
+        sensors: sensorReadings,
         motorRPMs: [0, 0],
         isFinished: false,
         elapsedMs,
@@ -167,20 +184,26 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
     },
 
     stop: () => {
-      logBuffer.push('[stop]');
       const rp = robotPhysics;
       if (!rp) return;
       rp.motorSpeeds.forEach((_, key) => rp.motorSpeeds.set(key, 0));
     },
 
     set_motor_speeds: (left: number, right: number) => {
-      logBuffer.push(`[set_motor_speeds] left=${left} right=${right}`);
       if (!robotPhysics) return;
       robotPhysics.motorSpeeds.set('0', left);
       robotPhysics.motorSpeeds.set('1', right);
     },
 
-    get_sensor: (_sensorId: string) => {
+    get_sensor: (sensorId: string) => {
+      if (sensorSim && robotPhysics) {
+        const readings = sensorSim.update(
+          robotPhysics.body.position.x,
+          robotPhysics.body.position.y,
+          robotPhysics.body.angle,
+        );
+        return readings[sensorId] ?? -1;
+      }
       return -1;
     },
 
@@ -239,6 +262,7 @@ function initPhysics(spec: RobotSpec, grid: MazeGrid) {
   const segments = mazeToWallSegments(grid);
   addMazeWalls(engine, segments);
   addGoalZone(engine, grid);
+  sensorSim = new SensorSimulator(spec, segments);
 
   setupGoalDetection(engine, () => {
     if (!isRunning || isFinished) return;
@@ -251,17 +275,6 @@ function initPhysics(spec: RobotSpec, grid: MazeGrid) {
       payload: { elapsedMs: performance.now() - startTime, path: [], logs: [...logBuffer] },
     });
   });
-
-  // log wall collisions
-  Matter.Events.on(engine, 'collisionStart', (event) => {
-    for (const pair of event.pairs) {
-      const labels = [pair.bodyA.label, pair.bodyB.label];
-      if (labels.includes('robot') && labels.includes('wall')) {
-        const body = robotPhysics!.body;
-        logBuffer.push(`[collision] tick=${tickCount} pos=(${body.position.x.toFixed(1)},${body.position.y.toFixed(1)}) vel=(${body.velocity.x.toFixed(3)},${body.velocity.y.toFixed(3)})`);
-      }
-    }
-  });
 }
 
 function resetPhysics() {
@@ -272,6 +285,7 @@ function resetPhysics() {
   engine = null;
   robotPhysics = null;
   robotSpec = null;
+  sensorSim = null;
   isRunning = false;
   isFinished = false;
   tickCount = 0;

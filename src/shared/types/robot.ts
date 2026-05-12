@@ -29,6 +29,8 @@ export interface SensorSpec {
   position: Vector2D;
   angle: number;
   range: number;
+  fov?: number;
+  noiseLevel?: number;
 }
 
 export interface RobotSpec {

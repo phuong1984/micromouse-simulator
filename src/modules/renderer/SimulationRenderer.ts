@@ -11,6 +11,7 @@ export class SimulationRenderer {
   private overlayLayer!: PIXI.Container;
   private robotBody!: PIXI.Graphics;
   private directionArrow!: PIXI.Graphics;
+  private sensorRays!: PIXI.Graphics;
   private scale: number = 1;
   private currentGrid: MazeGrid | null = null;
   private containerRef: HTMLElement | null = null;
@@ -44,8 +45,10 @@ export class SimulationRenderer {
 
     this.robotBody = new PIXI.Graphics();
     this.directionArrow = new PIXI.Graphics();
+    this.sensorRays = new PIXI.Graphics();
     this.robotLayer.addChild(this.robotBody);
     this.robotLayer.addChild(this.directionArrow);
+    this.robotLayer.addChild(this.sensorRays);
 
     this.app = app;
     this.resize();
@@ -111,10 +114,11 @@ export class SimulationRenderer {
       .fill({ color: goalColor, alpha: 0.5 });
   }
 
-  updateFrame(state: SimState, robotSpec: RobotSpec, _options: RenderOptions): void {
+  updateFrame(state: SimState, robotSpec: RobotSpec, options: RenderOptions): void {
     if (this.destroyed || !this.robotBody) return;
     this.robotBody.clear();
     this.directionArrow.clear();
+    this.sensorRays.clear();
 
     const scale = this.scale;
     const x = state.robot.x * scale;
@@ -136,6 +140,35 @@ export class SimulationRenderer {
     this.directionArrow.moveTo(0, 0);
     this.directionArrow.lineTo(0, -robotSpec.base.height / 2 * scale);
     this.directionArrow.stroke({ color: 0xffffff, width: 2 * scale });
+
+    if (options.showSensorRays && state.sensors) {
+      this.drawSensorRays(state, robotSpec);
+    }
+  }
+
+  private drawSensorRays(state: SimState, spec: RobotSpec): void {
+    const sc = this.scale;
+    const g = this.sensorRays;
+
+    for (const sensor of spec.sensors) {
+      const dist = state.sensors[sensor.id] ?? -1;
+      const sensorAngleRad = (sensor.angle * Math.PI) / 180;
+      const maxLen = sensor.range * sc;
+      const rayLen = dist > 0 ? Math.min(dist * sc, maxLen) : maxLen;
+      const color = dist > 0 ? 0xff4444 : 0x44ff44;
+
+      const ex = sensor.position.x * sc + Math.sin(sensorAngleRad) * rayLen;
+      const ey = sensor.position.y * sc - Math.cos(sensorAngleRad) * rayLen;
+
+      g.moveTo(sensor.position.x * sc, sensor.position.y * sc);
+      g.lineTo(ex, ey);
+      g.stroke({ color, width: 1.5, alpha: 0.7 });
+
+      if (dist > 0) {
+        g.circle(ex, ey, 3);
+        g.fill({ color: 0xff4444, alpha: 0.8 });
+      }
+    }
   }
 
   reset(): void {
@@ -143,6 +176,7 @@ export class SimulationRenderer {
     this.mazeLayer.clear();
     this.robotBody.clear();
     this.directionArrow.clear();
+    this.sensorRays.clear();
     this.overlayLayer.removeChildren();
   }
 
@@ -175,5 +209,4 @@ export class SimulationRenderer {
     const mazeH = grid.rows * grid.cellSize;
     return Math.min(maxW / mazeW, maxH / mazeH);
   }
-
 }

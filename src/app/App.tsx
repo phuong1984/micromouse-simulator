@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SimulationRenderer } from '../modules/renderer';
 import { MAZE_5x5_SIMPLE } from '../shared/constants';
 import { DEFAULT_ROBOT } from '../shared/constants';
@@ -19,6 +19,7 @@ function App() {
   const simReset = useSimulationStore((s) => s.reset);
   const simState = useSimulationStore((s) => s.currentState);
   const simSendMessage = useSimulationStore((s) => s.sendMessage);
+  const [showSensorRays, setShowSensorRays] = useState(false);
 
   useEffect(() => {
     const pressed: Record<string, boolean> = {};
@@ -96,9 +97,9 @@ function App() {
     renderer.updateFrame(
       simState,
       DEFAULT_ROBOT,
-      { showSensorRays: false, showPathTrail: false, showCellNumbers: false }
+      { showSensorRays, showPathTrail: false, showCellNumbers: false }
     );
-  }, [simState]);
+  }, [simState, showSensorRays]);
 
   return (
     <div className="app-container">
@@ -107,6 +108,16 @@ function App() {
       </aside>
       
       <main className="canvas-panel">
+        <div className="canvas-toolbar">
+          <label className="sensor-toggle">
+            <input
+              type="checkbox"
+              checked={showSensorRays}
+              onChange={(e) => setShowSensorRays(e.target.checked)}
+            />
+            Show sensor rays
+          </label>
+        </div>
         <div ref={containerRef} className="pixi-container" />
       </main>
       
