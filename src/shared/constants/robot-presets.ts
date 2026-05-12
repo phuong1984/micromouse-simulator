@@ -10,12 +10,12 @@ export const DEFAULT_ROBOT: RobotSpec = {
     {
       name: 'left',
       maxSpeed: 500,
-      maxTorque: 1.5,
+      maxTorque: 10,
     },
     {
       name: 'right',
       maxSpeed: 500,
-      maxTorque: 1.5,
+      maxTorque: 10,
     },
   ],
   wheels: [

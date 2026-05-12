@@ -81,16 +81,16 @@ index.html, package.json, etc.
 
 ## Current Phase & Status
 
-**Current Phase**: 2 — Blockly + Python Codegen
+**Current Phase**: 5 — Sensor Simulation (bắt đầu)
 
 | Phase | Status |
 |-------|--------|
 | 0 | Setup & Infrastructure | ✅ Hoàn |
 | 1 | Static Renderer (PixiJS) | ✅ Hoàn |
-| 2 | Blockly + Python Codegen | ⬜ Đang làm |
-| 3 | MicroPython Execution Engine | ⬜ |
-| 4 | Physics & Simulation Loop | ⬜ |
-| 5 | Sensor Simulation | ⬜ |
+| 2 | Blockly + Python Codegen | ✅ Hoàn |
+| 3 | MicroPython Execution Engine | ✅ Hoàn |
+| 4 | Physics & Simulation Loop | ✅ Hoàn |
+| 5 | Sensor Simulation | ⬜ Đang làm |
 | 5.5 | Integration | ⬜ |
 | 6 | Robot Config UI | ⬜ |
 | 7 | Maze Editor | ⬜ |

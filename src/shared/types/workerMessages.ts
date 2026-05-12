@@ -8,14 +8,23 @@ export interface StartPayload {
   pythonCode: string;
 }
 
+export interface KeyboardPayload {
+  up: boolean;
+  down: boolean;
+  left: boolean;
+  right: boolean;
+}
+
 export type MainToWorker =
   | { type: 'START'; payload: StartPayload }
   | { type: 'STOP' }
   | { type: 'STEP' }
-  | { type: 'RESET' };
+  | { type: 'RESET' }
+  | { type: 'KEYBOARD'; payload: KeyboardPayload };
 
 export interface StateUpdatePayload {
   state: SimState;
+  logs?: string[];
 }
 
 export interface FinishedPayload {

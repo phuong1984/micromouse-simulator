@@ -8,12 +8,16 @@
 
 > Hoàn tất. Xem `plan/03_PHASE_3_MICROPYTHON.md` hoặc `plan/00_TRACKING.md` để biết chi tiết.
 
+## Phase 4 — Physics & Simulation Loop ✅
+
+> Hoàn tất. Xem `plan/04_PHASE_4_PHYSICS.md` hoặc `plan/00_TRACKING.md` để biết chi tiết.
+
 ## Upcoming Phases
 
 | Phase | Status |
 |-------|--------|
-| 4 — Physics & Simulation Loop | ⬜ **Next** |
-| 5 — Sensor Simulation | ⬜ |
+| 4 — Physics & Simulation Loop | ✅ Hoàn |
+| 5 — Sensor Simulation | ⬜ **Next** |
 | 5.5 — Integration | ⬜ |
 | 6 — Robot Config UI | ⬜ |
 | 7 — Maze Editor | ⬜ |

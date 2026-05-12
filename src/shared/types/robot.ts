@@ -19,6 +19,8 @@ export interface WheelSpec {
   radius: number;
   distanceFromCenter: number;
   motorId: number;
+  frictionCoeff?: number;
+  position?: Vector2D;
 }
 
 export interface SensorSpec {

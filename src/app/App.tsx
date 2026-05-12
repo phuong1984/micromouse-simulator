@@ -10,17 +10,56 @@ import './App.css';
 
 function App() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const rendererRef = useRef<SimulationRenderer | null>(null);
   const activeTab = useCodeEditorStore((s) => s.activeTab);
   const setActiveTab = useCodeEditorStore((s) => s.setActiveTab);
   const simStatus = useSimulationStore((s) => s.status);
   const simStart = useSimulationStore((s) => s.start);
   const simStop = useSimulationStore((s) => s.stop);
   const simReset = useSimulationStore((s) => s.reset);
+  const simState = useSimulationStore((s) => s.currentState);
+  const simSendMessage = useSimulationStore((s) => s.sendMessage);
+
+  useEffect(() => {
+    const pressed: Record<string, boolean> = {};
+    const updateKeyboard = () => {
+      simSendMessage({
+        type: 'KEYBOARD',
+        payload: {
+          up: !!pressed['ArrowUp'],
+          down: !!pressed['ArrowDown'],
+          left: !!pressed['ArrowLeft'],
+          right: !!pressed['ArrowRight'],
+        },
+      });
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        pressed[e.key] = true;
+        updateKeyboard();
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        pressed[e.key] = false;
+        updateKeyboard();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [simSendMessage]);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     const renderer = new SimulationRenderer();
+    rendererRef.current = renderer;
     const grid = MAZE_5x5_SIMPLE;
     const startPos = cellToWorld(grid, grid.start.row, grid.start.col);
 
@@ -45,10 +84,21 @@ function App() {
     window.addEventListener('resize', handleResize);
     
     return () => {
+      rendererRef.current = null;
       renderer.destroy();
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  useEffect(() => {
+    const renderer = rendererRef.current;
+    if (!renderer || !simState) return;
+    renderer.updateFrame(
+      simState,
+      DEFAULT_ROBOT,
+      { showSensorRays: false, showPathTrail: false, showCellNumbers: false }
+    );
+  }, [simState]);
 
   return (
     <div className="app-container">

@@ -12,7 +12,7 @@
 | 1 | Static Renderer | 7 | 8h | ✅ Hoàn |
 | 2 | Blockly + Python Codegen | 8 | 10h | ✅ Hoàn |
 | 3 | MicroPython Execution Engine | 9 | 10h | ✅ Hoàn |
-| 4 | Physics & Simulation Loop | 8 | 8h | ⬜ Chưa bắt đầu |
+| 4 | Physics & Simulation Loop | 8 | 8h | ✅ Hoàn |
 | 5 | Sensor Simulation | 8 | 8h | ⬜ Chưa bắt đầu |
 | 5.5 | Integration | 4 | 3h | ⬜ Chưa bắt đầu |
 | 6 | Robot Config UI | 8 | 8h | ⬜ Chưa bắt đầu |
@@ -30,7 +30,7 @@
 | 1 | 0 + 1 | Project setup + static maze + robot | ✅ |
 | 2 | 2 | Blockly → Python code gen | ✅ |
 | 3 | 3 | MicroPython execution engine + console + Run button | ✅ |
-| 4 | 4 | Physics engine + Matter.js tick loop + robot moves | ⬜ |
+| 4 | 4 | Physics engine + Matter.js tick loop + robot moves | ✅ |
 | 5 | 5 + 5.5 | Sensors + integration test | ⬜ |
 | 6 | 6 + 7 | Config + Maze editor | ⬜ |
 | 7 | 8 + 9 | Telemetry + Polish | ⬜ |
@@ -100,6 +100,35 @@
 - **Modified files**: `src/app/App.tsx` (Run button + ConsolePanel), `src/app/App.css`, `vite.config.ts`, `src/shared/types/workerMessages.ts`
 - **Verify**: `npm run lint` ✅, `npm run build` ✅ (micropython.wasm 446KB, worker 78KB)
 - **Phase 3 HOÀN TẤT**: MicroPython WASM load trong Worker, robot API stub, console output, Run/Stop/Reset UI, build/lint pass
+
+### 2026-05-11 (Session 5) — Phase 4 Physics Engine + Simulation Loop
+- **Bug fixes**: Renderer drawWalls bottom/right boundary sai → fixed; mazeToWallSegments south/east centers sai + thiếu north boundary → fixed
+- **Task 4.1 COMPLETED**: `physicsWorld.ts` — createPhysicsWorld (gravity=0), addMazeWalls (static bodies), addGoalZone (sensor), setupGoalDetection (collisionStart)
+- **Task 4.2 COMPLETED**: `robotBody.ts` — createRobotBody (rectangle mass=150g→0.15kg), extractRobotState, setRobotPosition
+- **Task 4.3 COMPLETED**: `motorModel.ts` — applyMotorForces (differential drive PD controller, traction limit, localToWorld)
+- **Task 4.4 COMPLETED**: `sensorSimulator.ts` — stub class
+- **Task 4.5 COMPLETED**: `simulation.worker.ts` — rewritten with physics lifecycle: initPhysics → startTickLoop (60fps setTimeout) → checkPendingMoves → STATE_UPDATE
+- **Task 4.6 COMPLETED**: Keyboard control (Arrow key listener in App.tsx → KEYBOARD msg → worker sets motor speeds)
+- **Task 4.7 COMPLETED**: Goal detection (collisionStart event → FINISHED)
+- **Task 4.8 COMPLETED**: Async robot API (move/turn return Promise, pendingMoves checked each tick)
+- **Types fixed**: Added frictionCoeff/position to WheelSpec, updated store to send DEFAULT_ROBOT + MAZE_5x5_SIMPLE in START payload
+- **New files**: physicsWorld.ts, robotBody.ts, motorModel.ts, sensorSimulator.ts
+- **Modified files**: simulation.worker.ts (rewrite), store.ts, App.tsx, workerMessages.ts, robot.ts, SimulationRenderer.ts, maze.ts
+- **Verify**: `npm run build` ✅, `npm run lint` ✅
+
+### 2026-05-12 (Session 6) — Phase 4 Finalization + Critical Fixes
+- **Critical bug fix**: Robot body không được add vào Matter.js world → thêm `Matter.Composite.add(engine.world, robotPhysics.body)` trong `initPhysics()`
+- **Debug cleanup**: Xóa direct-force test code, debug logging (mass/isStatic/frictionAir), reduced tick position logging
+- **Fix**: Maze wall segments + renderer positions (north boundary, south/east centers)
+- **Bugs discovered and squashed**:
+  - Matter.js Verlet: force phải scale với dt² (277.78) vì `Δv = F/m·dt²`
+  - Wheel positions đặt sai trục (Y-offset thay vì X-offset) → robot không quay
+  - `setAngularVelocity(body, av·0.95)` vô hiệu — bị Body.update ghi đè + gây instability
+  - `maxTorque=1.5` quá nhỏ (terminal ~90 mm/s) → tăng lên 10 (~600 mm/s)
+  - RPM magic numbers → hằng số `FORWARD_RPM`, `TURN_RPM`, `DIAGONAL_INNER_RPM`
+- **Toolbox**: Blockly set_motors default RPM 2400→1200
+- **Phase 4 CHÍNH THỨC HOÀN TẤT**: Physics simulation (60fps) + keyboard + async robot API + goal detection + motor model data-driven
+- **Verify**: `npm run build` ✅, `npm run lint` ✅
 
 ### 2026-05-11 (Session 4) — Phase 2 Polish
 - **Scrollbar fix**: Ẩn Blockly flyout scrollbar bằng CSS (`.blocklyFlyoutScrollbar { display: none }`)

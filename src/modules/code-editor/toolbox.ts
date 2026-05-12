@@ -29,13 +29,13 @@ export const ROBOT_TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
             LEFT_RPM: {
               shadow: {
                 type: 'math_number',
-                fields: { NUM: 2400 },
+                fields: { NUM: 1200 },
               },
             },
             RIGHT_RPM: {
               shadow: {
                 type: 'math_number',
-                fields: { NUM: 2400 },
+                fields: { NUM: 1200 },
               },
             },
           },
