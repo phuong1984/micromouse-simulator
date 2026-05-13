@@ -250,9 +250,11 @@
 - **Telemetry store**: `replayRecording`, `replayIndex`, `isReplayPlaying`, `replaySpeed`, `replayState`, actions
 - **Verify**: `npm run build` ✅, `npm run lint` ✅
 
-### 2026-05-13 (Session 14) — Phase 8 Bug Fix: Stuck Detection in move()
-- **Problem**: Robot calls `move(distance)` but hits wall before reaching target → `pendingMoves` never resolves → robot stuck forever
-- **Root cause**: Speed-based stuck detection (`speed < 0.01`) was too fragile — Matter.js collision resolution creates residual velocity that keeps speed above threshold
-- **Fix**: Replaced speed-based check with position-based detection using existing `PendingMove.stuckTicks/prevCheckX/prevCheckY` fields (were declared but unused). If robot doesn't move >0.1mm for 15 consecutive ticks while `isAgainstWall`, resolve as stuck.
-- **Files modified**: `src/workers/simulation.worker.ts` (lines 69-88)
+### 2026-05-13 (Session 14) — Phase 8 Bug Fixes + Phase 9 Ready
+- **Bug 1**: Speed-based stuck detection (`speed < 0.01`) too fragile — Matter.js collision jitter keeps speed above threshold. Fix: position-based detection using existing `PendingMove.stuckTicks/prevCheckX/prevCheckY` fields.
+- **Bug 2**: `traveled > 5` gate prevented stuck detection for moves starting while robot already against wall (traveled never exceeds fractions mm). Fix: removed gate.
+- **Bug 3**: `delta < 0.1` threshold too low for collision jitter amplitude. Fix: `0.1 → 0.5`.
+- **Debug cleanup**: Removed `[debug]` log block every 10 ticks.
+- **Files modified**: `src/workers/simulation.worker.ts`
 - **Verify**: `npm run build` ✅, `npm run lint` ✅
+- **Phase 9 sẵn sàng**: Polish & Education (tasks 9.1–9.8)

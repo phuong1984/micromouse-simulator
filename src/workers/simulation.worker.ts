@@ -128,18 +128,6 @@ function tick() {
   const state = extractRobotState(robotPhysics.body);
   const elapsedMs = performance.now() - startTime;
 
-  if (tickCount % 10 === 0 && isAgainstWall) {
-    const frontDist = sensorReadings['front'] ?? -1;
-    const cos = Math.cos(state.angle);
-    const sin = Math.sin(state.angle);
-    const sensorWorldY = state.y + 0 * sin - 40 * cos;
-    logBuffer.push(
-      `[debug] tick=${tickCount} robotY=${state.y.toFixed(1)} sensorY=${sensorWorldY.toFixed(1)}`
-      + ` front=${frontDist}mm againstWall=${isAgainstWall}`
-      + ` pendingMoves=${pendingMoves.length}`
-    );
-  }
-
   replayPath.push({
     tick: tickCount,
     x: state.x,
