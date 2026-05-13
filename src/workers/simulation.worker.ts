@@ -9,6 +9,7 @@ import { applyMotorForces } from '../modules/simulation/motorModel';
 import { SensorSimulator } from '../modules/simulation/sensorSimulator';
 import type { RobotSpec } from '../shared/types/robot';
 import type { MazeGrid } from '../shared/types/maze';
+import type { PathPoint } from '../shared/types/telemetry';
 import { cellToWorld, mazeToWallSegments } from '../shared/utils/maze';
 import wasmUrl from '@micropython/micropython-webassembly-pyscript/micropython.wasm?url';
 
@@ -22,6 +23,8 @@ let tickCount = 0;
 let startTime = 0;
 let micropython: MicroPythonModule | null = null;
 let logBuffer: string[] = [];
+let replayPath: PathPoint[] = [];
+let isAgainstWall = false;
 
 interface PendingMove {
   type: 'distance' | 'angle';
@@ -31,6 +34,9 @@ interface PendingMove {
   targetDistance?: number;
   targetAngleDiff?: number;
   resolve: () => void;
+  stuckTicks?: number;
+  prevCheckX?: number;
+  prevCheckY?: number;
 }
 
 let pendingMoves: PendingMove[] = [];
@@ -59,6 +65,26 @@ function checkPendingMoves() {
         Matter.Body.setVelocity(body, { x: 0, y: 0 });
         move.resolve();
         return false;
+      }
+      if (isAgainstWall) {
+        const cx = body.position.x;
+        const cy = body.position.y;
+        if (move.prevCheckX !== undefined && move.prevCheckY !== undefined) {
+          const delta = Math.sqrt((cx - move.prevCheckX) ** 2 + (cy - move.prevCheckY) ** 2);
+          move.stuckTicks = (delta < 0.5) ? (move.stuckTicks ?? 0) + 1 : 0;
+        } else {
+          move.stuckTicks = 0;
+        }
+        move.prevCheckX = cx;
+        move.prevCheckY = cy;
+
+        if ((move.stuckTicks ?? 0) >= 15) {
+          logBuffer.push(`[move] stuck at ${traveled.toFixed(1)}mm (target ${move.targetDistance})`);
+          robotPhysics!.motorSpeeds.forEach((_, key) => robotPhysics!.motorSpeeds.set(key, 0));
+          Matter.Body.setVelocity(body, { x: 0, y: 0 });
+          move.resolve();
+          return false;
+        }
       }
     } else if (move.type === 'angle') {
       const diff = normalizeAngle(body.angle - move.startAngle!);
@@ -93,13 +119,6 @@ function tick() {
         robotPhysics.body.position.y,
         robotPhysics.body.angle,
       );
-      if (tickCount % 60 === 0) {
-        const parts: string[] = [];
-        for (const [id, val] of Object.entries(sensorReadings)) {
-          parts.push(`${id}=${val}`);
-        }
-        logBuffer.push(`[sensors] ${parts.join('  ')}`);
-      }
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
@@ -107,8 +126,28 @@ function tick() {
   }
 
   const state = extractRobotState(robotPhysics.body);
-
   const elapsedMs = performance.now() - startTime;
+
+  if (tickCount % 10 === 0 && isAgainstWall) {
+    const frontDist = sensorReadings['front'] ?? -1;
+    const cos = Math.cos(state.angle);
+    const sin = Math.sin(state.angle);
+    const sensorWorldY = state.y + 0 * sin - 40 * cos;
+    logBuffer.push(
+      `[debug] tick=${tickCount} robotY=${state.y.toFixed(1)} sensorY=${sensorWorldY.toFixed(1)}`
+      + ` front=${frontDist}mm againstWall=${isAgainstWall}`
+      + ` pendingMoves=${pendingMoves.length}`
+    );
+  }
+
+  replayPath.push({
+    tick: tickCount,
+    x: state.x,
+    y: state.y,
+    angle: state.angle,
+    sensorReadings: { ...sensorReadings },
+    elapsedMs,
+  });
 
   // forward accumulated logs with state update
   const extra: { logs?: string[] } = {};
@@ -280,8 +319,25 @@ function initPhysics(spec: RobotSpec, grid: MazeGrid) {
     pendingMoves = [];
     postToMain({
       type: 'FINISHED',
-      payload: { elapsedMs: performance.now() - startTime, path: [], logs: [...logBuffer] },
+      payload: { elapsedMs: performance.now() - startTime, path: replayPath, logs: [...logBuffer], reason: 'goal' },
     });
+  });
+
+  Matter.Events.on(engine, 'collisionStart', (event) => {
+    for (const pair of event.pairs) {
+      const labels = [pair.bodyA.label, pair.bodyB.label];
+      if (labels.includes('robot') && labels.includes('wall')) {
+        isAgainstWall = true;
+      }
+    }
+  });
+  Matter.Events.on(engine, 'collisionEnd', (event) => {
+    for (const pair of event.pairs) {
+      const labels = [pair.bodyA.label, pair.bodyB.label];
+      if (labels.includes('robot') && labels.includes('wall')) {
+        isAgainstWall = false;
+      }
+    }
   });
 }
 
@@ -296,6 +352,7 @@ function resetPhysics() {
   sensorSim = null;
   isRunning = false;
   isFinished = false;
+  isAgainstWall = false;
   tickCount = 0;
   pendingMoves = [];
 }
@@ -365,7 +422,7 @@ async function handleStart(payload: { robotSpec: RobotSpec; mazeGrid: MazeGrid; 
       isRunning = false;
       postToMain({
         type: 'FINISHED',
-        payload: { elapsedMs: performance.now() - startTime, path: [], logs: [...logBuffer] },
+        payload: { elapsedMs: performance.now() - startTime, path: replayPath, logs: [...logBuffer], reason: 'completed' },
       });
     }
   } catch (err: unknown) {
@@ -387,6 +444,7 @@ function handleReset() {
   stopTickLoop();
   resetPhysics();
   logBuffer = [];
+  replayPath = [];
 }
 
 self.onmessage = (event: MessageEvent<MainToWorker>) => {

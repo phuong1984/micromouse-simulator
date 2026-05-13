@@ -1,6 +1,7 @@
 import { RobotSpec } from './robot';
 import { MazeGrid } from './maze';
 import { SimState } from './simulation';
+import { PathPoint } from './telemetry';
 
 export interface StartPayload {
   robotSpec: RobotSpec;
@@ -29,8 +30,9 @@ export interface StateUpdatePayload {
 
 export interface FinishedPayload {
   elapsedMs: number;
-  path: Array<{ tick: number; x: number; y: number; angle: number }>;
+  path: PathPoint[];
   logs: string[];
+  reason: 'goal' | 'completed';
 }
 
 export interface ErrorPayload {

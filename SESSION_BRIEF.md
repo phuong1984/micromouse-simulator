@@ -11,36 +11,28 @@
 
 ## Last Session Recap
 
-**Session 12 — Phase 7 hoàn tất + codebase refactoring.**
+**Session 13 — Phase 8 Telemetry + Replay hoàn tất.**
 
 **What was done:**
-- **Phase 7 hoàn tất**: Grid lines nét đứt (cả MazeRenderer + SimulationRenderer), fix thứ tự rendering (grid lines trên cùng), chỉnh parameters cho grid lines visible, bỏ perimeter grid lines.
-- **Refactoring**: 
-  - Shared color constants (`render-colors.ts`) — WALL_COLOR, FLOOR_COLOR, START_COLOR, GOAL_COLOR, GRID_LINE_COLOR
-  - Shared `drawMazeMarkers` + `drawMazeGridLines` trong `maze-render.ts`
-  - `cloneCells` move vào `shared/utils/maze.ts`
-  - `downloadJson` + `readFileAsText` trong `shared/utils/export-import.ts`
-  - Shared `NumberField` component (`shared/components/NumberField.tsx`)
-  - Shared preset-storage utilities
-  - Shared PixiJS init/resize/destroy utilities (`pixi-utils.ts`)
-- **Wheel bounds**: Dynamic min/max theo công thức (posX phụ thuộc wheelWidth, posY phụ thuộc radius, v.v.)
-- **Base width/height**: max = 168mm (passage thực tế)
+- **8.1 StatusBar**: Time/status/position/heading trong canvas-toolbar cùng hàng Show sensor rays
+- **8.2 SensorPanel**: Progress bars per sensor, color coding (xanh <50mm, cam 50-100mm, đỏ >100mm)
+- **8.3, 8.4**: Removed per user decision (Motor panel + Chart)
+- **8.6 ReplayRecorder**: Worker ghi PathPoint[] mỗi 3 ticks, gửi kèm FINISHED
+- **8.7 ReplayPlayer**: Slider + play/pause (requestAnimationFrame, binary search theo elapsedMs)
+- **8.8 Export**: Download JSON button
+- **8.9 Speed**: 0.5x/1x/2x/4x selector
+- **8.10 Best time**: localStorage per maze, 🏆 trong status bar
+- **Layout**: 4-column (code 30% | sensor 160px | canvas flex-1 | replay 160px)
 - `build` ✅, `lint` ✅
 
 **State hiện tại:**
-- Phase 7 chính thức hoàn tất
-- Phase 8 sẵn sàng
+- Phase 8 hoàn tất
+- Phase 9 sẵn sàng
 
 ## Remaining
 
-- Phase 8: Telemetry & Replay (tasks 8.1–8.10)
 - Phase 9: Polish & Education
 
 ## Blockers
 
 - None
-
-## Notes
-
-- MazeRenderer creates separate PixiJS canvas (not sharing with SimulationRenderer)
-- Tab panels stay mounted (CSS visibility toggle) để preserve PixiJS context

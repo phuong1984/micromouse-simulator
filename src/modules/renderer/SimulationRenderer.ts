@@ -4,7 +4,7 @@ import type { RobotSpec } from '../../shared/types/robot';
 import type { SimState } from '../../shared/types/simulation';
 import { RenderOptions } from './types';
 import { drawMazeWalls, drawMazeMarkers, drawMazeGridLines, computeMazeScale, computeMazeOffset } from '../../shared/utils/maze-render';
-import { WALL_COLOR, FLOOR_COLOR, START_COLOR, GOAL_COLOR, GRID_LINE_COLOR } from '../../shared/constants/render-colors';
+import { WALL_COLOR, FLOOR_COLOR, START_COLOR, GOAL_COLOR, GRID_LINE_COLOR, BASE_CORNER_RADIUS, WHEEL_CORNER_RADIUS } from '../../shared/constants/render-colors';
 import { createPixiApp, destroyPixiApp, resizePixiRenderer } from '../../shared/utils/pixi-utils';
 
 const BASE_COLOR = 0x1e3a5f;
@@ -33,6 +33,15 @@ export class SimulationRenderer {
   private currentGrid: MazeGrid | null = null;
   private containerRef: HTMLElement | null = null;
   private destroyed = false;
+  private celebrated = false;
+
+  private confettiParticles: Array<{
+    x: number; y: number; vx: number; vy: number;
+    rotation: number; rotSpeed: number;
+    color: number; alpha: number; life: number; maxLife: number;
+    size: { w: number; h: number };
+  }> = [];
+  private confettiG: PIXI.Graphics | null = null;
 
   async init(container: HTMLElement): Promise<void> {
     this.destroyed = false;
@@ -94,8 +103,88 @@ export class SimulationRenderer {
     this.sceneContainer.y = off.y;
   }
 
+  celebrate(): void {
+    if (this.destroyed || !this.app || this.celebrated) return;
+    this.celebrated = true;
+
+    const w = this.app.screen.width;
+    const h = this.app.screen.height;
+    const colors = [0xff4444, 0x44ff44, 0x4488ff, 0xffaa00, 0xff44ff, 0xffff44];
+
+    this.confettiParticles = [];
+    for (let i = 0; i < 120; i++) {
+      this.confettiParticles.push({
+        x: w * 0.2 + Math.random() * w * 0.6,
+        y: h * 0.1 + Math.random() * h * -0.3,
+        vx: (Math.random() - 0.5) * 6,
+        vy: Math.random() * 3 + 1,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.15,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        alpha: 1,
+        life: 0,
+        maxLife: 300 + Math.random() * 180,
+        size: { w: 4 + Math.random() * 6, h: 2 + Math.random() * 4 },
+      });
+    }
+
+    this.confettiG = new PIXI.Graphics();
+    this.overlayLayer.addChild(this.confettiG);
+
+    const ticker = () => {
+      if (this.destroyed || !this.confettiG) return;
+      this.confettiG.clear();
+
+      let alive = false;
+      for (const p of this.confettiParticles) {
+        if (p.life >= p.maxLife) continue;
+        p.life++;
+        alive = true;
+        p.x += p.vx;
+        p.vy += 0.05;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+        p.alpha = 1 - p.life / p.maxLife;
+
+        const s = Math.sin(p.rotation);
+        const c = Math.cos(p.rotation);
+        const hw = p.size.w / 2;
+        const hh = p.size.h / 2;
+        const cx = p.x;
+        const cy = p.y;
+
+        this.confettiG.moveTo(cx + (-hw * c - -hh * s), cy + (-hw * s + -hh * c));
+        this.confettiG.lineTo(cx + (hw * c - -hh * s), cy + (hw * s + -hh * c));
+        this.confettiG.lineTo(cx + (hw * c - hh * s), cy + (hw * s + hh * c));
+        this.confettiG.lineTo(cx + (-hw * c - hh * s), cy + (-hw * s + hh * c));
+        this.confettiG.closePath();
+        this.confettiG.fill({ color: p.color, alpha: p.alpha });
+      }
+
+      if (!alive) {
+        this.cleanupConfetti();
+      }
+    };
+
+    this.app.ticker.add(ticker);
+  }
+
+  private cleanupConfetti(): void {
+    if (this.confettiG) {
+      this.overlayLayer.removeChild(this.confettiG);
+      this.confettiG.destroy();
+      this.confettiG = null;
+    }
+    this.confettiParticles = [];
+    this.celebrated = false;
+  }
+
   updateFrame(state: SimState, robotSpec: RobotSpec, options: RenderOptions): void {
     if (this.destroyed || !this.robotBody) return;
+
+    if (!state.isFinished) {
+      this.celebrated = false;
+    }
 
     this.robotBody.clear();
     this.directionArrow.clear();
@@ -122,7 +211,7 @@ export class SimulationRenderer {
       this.robotBody.fill(BASE_COLOR);
       this.robotBody.stroke({ color: BASE_STROKE, width: 2 * s });
     } else {
-      this.robotBody.rect(-bw / 2, -bh / 2, bw, bh);
+      this.robotBody.roundRect(-bw / 2, -bh / 2, bw, bh, BASE_CORNER_RADIUS * s);
       this.robotBody.fill(BASE_COLOR);
       this.robotBody.stroke({ color: BASE_STROKE, width: 2 * s });
     }
@@ -145,7 +234,7 @@ export class SimulationRenderer {
       const wy = -w.position.y * s;
       const ww = (w.width ?? 8) * s;
       const wr = w.radius * s;
-      this.robotWheels.rect(wx - ww / 2, wy - wr, ww, wr * 2);
+      this.robotWheels.roundRect(wx - ww / 2, wy - wr, ww, wr * 2, WHEEL_CORNER_RADIUS * s);
       this.robotWheels.fill(WHEEL_COLOR);
       if (s > 0.5) this.robotWheels.stroke({ color: WHEEL_STROKE, width: 1 * s });
     }
@@ -230,6 +319,7 @@ export class SimulationRenderer {
     this.robotSensors.clear();
     this.sensorFov.clear();
     this.sensorRays.clear();
+    this.cleanupConfetti();
     this.overlayLayer.removeChildren();
   }
 

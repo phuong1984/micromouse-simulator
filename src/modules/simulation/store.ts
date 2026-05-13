@@ -12,6 +12,7 @@ export interface SimulationState {
   status: SimStatus;
   currentState: SimState | null;
   error: string | null;
+  finishReason: 'goal' | 'completed' | null;
   worker: Worker | null;
   start: () => void;
   stop: () => void;
@@ -23,6 +24,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   status: 'idle',
   currentState: null,
   error: null,
+  finishReason: null,
   worker: null,
 
   start: () => {
@@ -50,14 +52,24 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
           }
           break;
         case 'FINISHED':
-          set({ status: 'finished' });
+          set({ status: 'finished', finishReason: msg.payload.reason });
           {
-            const logs = msg.payload.logs;
+            const { logs, path, elapsedMs } = msg.payload;
             const telemetry = useTelemetryStore.getState();
             for (const log of logs) {
               telemetry.appendLog(log, 'info');
             }
             telemetry.appendLog('[sim] Finished', 'info');
+            if (path.length > 0) {
+              telemetry.setReplayRecording(path);
+            }
+            const grid = useMazeStore.getState().mazeGrid;
+            const mazeId = `${grid.rows}x${grid.cols}-${grid.start.row}/${grid.start.col}`;
+            const key = `best-${mazeId}`;
+            const current = parseFloat(localStorage.getItem(key) ?? 'Infinity');
+            if (elapsedMs < current) {
+              localStorage.setItem(key, String(elapsedMs));
+            }
           }
           break;
         case 'PYTHON_ERROR':
@@ -100,7 +112,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       worker.postMessage({ type: 'STOP' });
       worker.terminate();
     }
-    set({ status: 'idle', worker: null });
+    set({ status: 'idle', worker: null, finishReason: null });
     useTelemetryStore.getState().appendLog('[sim] Stopped', 'info');
   },
 
@@ -110,7 +122,8 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       worker.postMessage({ type: 'RESET' });
       worker.terminate();
     }
-    set({ status: 'idle', worker: null, currentState: null, error: null });
+    set({ status: 'idle', worker: null, currentState: null, error: null, finishReason: null });
+    useTelemetryStore.getState().clearReplay();
     useTelemetryStore.getState().appendLog('[sim] Reset', 'info');
   },
 

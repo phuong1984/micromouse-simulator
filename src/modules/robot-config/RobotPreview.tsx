@@ -1,4 +1,5 @@
 import { useRobotConfigStore } from './store';
+import { BASE_CORNER_RADIUS, WHEEL_CORNER_RADIUS } from '../../shared/constants/render-colors';
 
 const CELL_SIZE = 180;
 const VIEWBOX = 360;
@@ -81,7 +82,7 @@ export function RobotPreview() {
             x={CX - base.width / 2}
             y={CY - base.height / 2}
             width={base.width} height={base.height}
-            rx={4} fill="#1e3a5f" stroke="#3b82f6" strokeWidth={2}
+            rx={BASE_CORNER_RADIUS} fill="#1e3a5f" stroke="#3b82f6" strokeWidth={2}
           />
         )}
 
@@ -111,7 +112,7 @@ export function RobotPreview() {
               y={wy - w.radius}
               width={w.width ?? 8}
               height={w.radius * 2}
-              rx={2}
+              rx={WHEEL_CORNER_RADIUS}
               fill="#374151" stroke="#6b7280" strokeWidth={1}
             />
           );

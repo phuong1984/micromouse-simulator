@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { SimulationRenderer } from '../modules/renderer';
 import { cellToWorld } from '../shared/utils/maze';
+import { playSound } from '../shared/utils/celebration-sound';
 import { BlocklyEditor, MonacoEditor, useCodeEditorStore, updateSensorDropdowns, updateWheelDropdowns } from '../modules/code-editor';
 import { useSimulationStore } from '../modules/simulation';
-import { ConsolePanel } from '../modules/telemetry';
+import { ConsolePanel, StatusBar, SensorPanel, ReplayPlayer, useTelemetryStore } from '../modules/telemetry';
 import { RobotConfig, RobotPreview, useRobotConfigStore } from '../modules/robot-config';
 import { MazeEditor, useMazeStore } from '../modules/maze';
 import './App.css';
@@ -17,15 +18,18 @@ function App() {
   const activeTab = useCodeEditorStore((s) => s.activeTab);
   const setActiveTab = useCodeEditorStore((s) => s.setActiveTab);
   const simStatus = useSimulationStore((s) => s.status);
+  const finishReason = useSimulationStore((s) => s.finishReason);
   const simStart = useSimulationStore((s) => s.start);
   const simStop = useSimulationStore((s) => s.stop);
   const simReset = useSimulationStore((s) => s.reset);
   const simState = useSimulationStore((s) => s.currentState);
+  const replayState = useTelemetryStore((s) => s.replayState);
   const simSendMessage = useSimulationStore((s) => s.sendMessage);
   const robotSpec = useRobotConfigStore((s) => s.spec);
   const sensors = useRobotConfigStore((s) => s.spec.sensors);
   const wheels = useRobotConfigStore((s) => s.spec.wheels);
   const [showSensorRays, setShowSensorRays] = useState(false);
+  const prevStatusRef = useRef(simStatus);
   const mazeGrid = useMazeStore((s) => s.mazeGrid);
 
   useEffect(() => {
@@ -106,17 +110,19 @@ function App() {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const renderState = replayState ?? simState;
+
   useEffect(() => {
     const renderer = rendererRef.current;
     if (!renderer) return;
-    if (simState) {
+    if (renderState) {
       renderer.updateFrame(
-        simState,
+        renderState,
         robotSpec,
         { showSensorRays, showPathTrail: false, showCellNumbers: false }
       );
     }
-  }, [simState, showSensorRays, robotSpec]);
+  }, [renderState, showSensorRays, robotSpec]);
 
   useEffect(() => {
     const renderer = rendererRef.current;
@@ -157,6 +163,22 @@ function App() {
     );
   }, [mazeGrid, robotSpec, showSensorRays]);
 
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    if (simStatus === 'finished' && prev !== 'finished') {
+      if (finishReason === 'goal') {
+        playSound('/finished.mp3');
+        rendererRef.current?.celebrate();
+      } else {
+        playSound('/no.mp3');
+      }
+    }
+    if (simStatus === 'error' && prev !== 'error') {
+      playSound('/no.mp3');
+    }
+    prevStatusRef.current = simStatus;
+  }, [simStatus, finishReason]);
+
   return (
     <div className="app-container">
       <nav className="app-tabs">
@@ -182,65 +204,72 @@ function App() {
 
       <div className="app-content">
         <div className={`tab-panel ${appTab === 'simulation' ? 'active' : ''}`}>
-          <aside className="code-panel">
-            <div className="flex border-b border-gray-700">
-              <button
-                className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-                  activeTab === 'blockly'
-                    ? 'bg-gray-800 text-white border-b-2 border-blue-500'
-                    : 'bg-gray-900 text-gray-400 hover:text-gray-200'
-                }`}
-                id="tab-blockly"
-                onClick={() => setActiveTab('blockly')}
-              >
-                Blockly
-              </button>
-              <button
-                className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-                  activeTab === 'monaco'
-                    ? 'bg-gray-800 text-white border-b-2 border-blue-500'
-                    : 'bg-gray-900 text-gray-400 hover:text-gray-200'
-                }`}
-                id="tab-monaco"
-                onClick={() => setActiveTab('monaco')}
-              >
-                Python
-              </button>
-              <div className="flex items-center gap-1 px-2 border-l border-gray-700">
-                {simStatus === 'running' ? (
-                  <button onClick={simStop} className="run-btn run-btn-stop">⏹</button>
-                ) : simStatus === 'finished' || simStatus === 'error' ? (
-                  <button onClick={simReset} className="run-btn run-btn-reset">↺</button>
-                ) : (
-                  <button onClick={simStart} className="run-btn run-btn-start">▶</button>
-                )}
+          <div className="simulation-layout">
+            <aside className="code-panel">
+              <div className="flex border-b border-gray-700">
+                <button
+                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
+                    activeTab === 'blockly'
+                      ? 'bg-gray-800 text-white border-b-2 border-blue-500'
+                      : 'bg-gray-900 text-gray-400 hover:text-gray-200'
+                  }`}
+                  id="tab-blockly"
+                  onClick={() => setActiveTab('blockly')}
+                >
+                  Blockly
+                </button>
+                <button
+                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
+                    activeTab === 'monaco'
+                      ? 'bg-gray-800 text-white border-b-2 border-blue-500'
+                      : 'bg-gray-900 text-gray-400 hover:text-gray-200'
+                  }`}
+                  id="tab-monaco"
+                  onClick={() => setActiveTab('monaco')}
+                >
+                  Python
+                </button>
+                <div className="flex items-center gap-1 px-2 border-l border-gray-700">
+                  {simStatus === 'running' ? (
+                    <button onClick={simStop} className="run-btn run-btn-stop">⏹</button>
+                  ) : simStatus === 'finished' || simStatus === 'error' ? (
+                    <button onClick={simReset} className="run-btn run-btn-reset">↺</button>
+                  ) : (
+                    <button onClick={simStart} className="run-btn run-btn-start">▶</button>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="flex-1 min-h-0 flex flex-col">
-              <div className="flex-1 min-h-0" style={{ display: activeTab === 'blockly' ? 'flex' : 'none', flexDirection: 'column' }}>
-                <BlocklyEditor />
+              <div className="flex-1 min-h-0 flex flex-col">
+                <div className="flex-1 min-h-0" style={{ display: activeTab === 'blockly' ? 'flex' : 'none', flexDirection: 'column' }}>
+                  <BlocklyEditor />
+                </div>
+                <div className="flex-1 min-h-0" style={{ display: activeTab === 'monaco' ? 'flex' : 'none' }}>
+                  <MonacoEditor />
+                </div>
               </div>
-              <div className="flex-1 min-h-0" style={{ display: activeTab === 'monaco' ? 'flex' : 'none' }}>
-                <MonacoEditor />
+              <div className="h-32 flex-shrink-0">
+                <ConsolePanel />
               </div>
-            </div>
-            <div className="h-32 flex-shrink-0">
-              <ConsolePanel />
-            </div>
-          </aside>
-          <main className="canvas-panel">
-            <div className="canvas-toolbar">
-              <label className="sensor-toggle">
-                <input
-                  type="checkbox"
-                  checked={showSensorRays}
-                  onChange={(e) => setShowSensorRays(e.target.checked)}
-                />
-                Show sensor rays
-              </label>
-            </div>
-            <div ref={containerRef} className="pixi-container" />
-          </main>
+            </aside>
+            <SensorPanel />
+            <main className="canvas-panel">
+              <div className="canvas-toolbar">
+                <StatusBar />
+                <div className="canvas-toolbar-right">
+                  <label className="sensor-toggle">
+                    <input
+                      type="checkbox"
+                      checked={showSensorRays}
+                      onChange={(e) => setShowSensorRays(e.target.checked)}
+                    />
+                    Show sensor rays
+                  </label>
+                </div>
+              </div>
+              <div ref={containerRef} className="pixi-container" />
+            </main>
+            <ReplayPlayer />
+          </div>
         </div>
         <div className={`tab-panel ${appTab === 'maze' ? 'active' : ''}`}>
           <MazeEditor />

@@ -105,7 +105,7 @@ index.html, package.json, etc.
 | 5.5 | Integration | ✅ Hoàn |
 | 6 | Robot Config UI | ✅ Hoàn |
 | 7 | Maze Editor | ✅ Hoàn |
-| 8 | Telemetry & Replay | 🔄 Đang làm |
+| 8 | Telemetry & Replay | ✅ Hoàn |
 | 9 | Polish & Education | ⬜ |
 
 Check `plan/00_TRACKING.md` for detailed status.

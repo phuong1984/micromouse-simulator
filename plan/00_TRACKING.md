@@ -17,7 +17,7 @@
 | 5.5 | Integration | 4 | 3h | ⬜ Chưa bắt đầu |
 | 6 | Robot Config UI | 8 | 8h | ✅ Hoàn — tasks 6.1–6.8 done |
 | 7 | Maze Editor | 10 | 11.5h | ✅ Hoàn — tasks 7.1–7.10 + polish + refactoring + grid lines |
-| 8 | Telemetry & Replay | 10 | 9h | 🔄 Đang làm |
+| 8 | Telemetry & Replay | 10 | 9h | ✅ Hoàn — tasks 8.1–8.10 (8.3, 8.4 removed per user) |
 | 9 | Polish & Education | 8 | 11h | ⬜ Chưa bắt đầu |
 | **TỔNG** | | **84** | **~98.5h** | |
 
@@ -233,3 +233,26 @@
 - **Verify**: `npm run build` ✅, `npm run lint` ✅
 - **Phase 7 CHÍNH THỨC HOÀN TẤT**: tasks 7.1–7.10 + polish + refactoring + grid lines
 - **Phase 8 sẵn sàng**: Telemetry & Replay
+
+### 2026-05-13 (Session 13) — Phase 8 Telemetry + Replay
+- **8.1 StatusBar**: Hiển thị time/status/position/heading trong canvas-toolbar (cùng hàng với Show sensor rays)
+- **8.2 SensorPanel**: Progress bars per sensor với color coding (xanh <50mm, cam 50-100mm, đỏ >100mm), giữa code-panel và canvas-panel
+- **8.5 ConsolePanel**: Đã có từ Phase 3, giữ nguyên trong code-panel
+- **8.6 ReplayRecorder**: Worker-side recording mỗi 3 ticks → PathPoint[], gửi kèm FINISHED payload
+- **8.7 ReplayPlayer**: Slider (range input), play/pause với requestAnimationFrame, binary search theo elapsedMs
+- **8.8 Export**: Nút download JSON trong ReplayPlayer
+- **8.9 Speed multiplier**: 0.5x/1x/2x/4x selector trong ReplayPlayer
+- **8.10 Best time**: localStorage per maze, hiển thị 🏆 trong StatusBar khi finished
+- **Layout**: 4-column (code 30% | sensor 160px | canvas flex-1 | replay 160px). StatusBar inside canvas-toolbar.
+- **App.tsx**: `replayState ?? simState` cho PixiJS rendering, ReplayPlayer component thay placeholder
+- **Worker**: `PathPoint` import, `replayPath` array, record trong `tick()`, gửi kèm `FINISHED`
+- **Simulation store**: Lưu path vào telemetry store trên FINISHED, lưu best time localStorage
+- **Telemetry store**: `replayRecording`, `replayIndex`, `isReplayPlaying`, `replaySpeed`, `replayState`, actions
+- **Verify**: `npm run build` ✅, `npm run lint` ✅
+
+### 2026-05-13 (Session 14) — Phase 8 Bug Fix: Stuck Detection in move()
+- **Problem**: Robot calls `move(distance)` but hits wall before reaching target → `pendingMoves` never resolves → robot stuck forever
+- **Root cause**: Speed-based stuck detection (`speed < 0.01`) was too fragile — Matter.js collision resolution creates residual velocity that keeps speed above threshold
+- **Fix**: Replaced speed-based check with position-based detection using existing `PendingMove.stuckTicks/prevCheckX/prevCheckY` fields (were declared but unused). If robot doesn't move >0.1mm for 15 consecutive ticks while `isAgainstWall`, resolve as stuck.
+- **Files modified**: `src/workers/simulation.worker.ts` (lines 69-88)
+- **Verify**: `npm run build` ✅, `npm run lint` ✅

@@ -9,16 +9,16 @@
 
 ## Completed: ✅
 
-- [ ] 8.1 — Status Bar
-- [ ] 8.2 — Sensor Panel
-- [ ] 8.3 — Motor Panel
-- [ ] 8.4 — Position/Heading Chart
-- [ ] 8.5 — Console/Log Panel
-- [ ] 8.6 — ReplayRecorder (Worker-side)
-- [ ] 8.7 — ReplayPlayer component
-- [ ] 8.8 — Export replay JSON
-- [ ] 8.9 — Speed multiplier
-- [ ] 8.10 — Best time (localStorage)
+- [x] 8.1 — Status Bar (inside canvas-toolbar)
+- [x] 8.2 — Sensor Panel (between code-panel and canvas-panel)
+- [ ] 8.3 — Motor Panel (removed per user decision)
+- [ ] 8.4 — Position/Heading Chart (removed per user decision)
+- [x] 8.5 — Console/Log Panel (from Phase 3)
+- [x] 8.6 — ReplayRecorder (Worker-side, every 3 ticks)
+- [x] 8.7 — ReplayPlayer component (slider + play/pause)
+- [x] 8.8 — Export replay JSON (download button)
+- [x] 8.9 — Speed multiplier (0.5x/1x/2x/4x)
+- [x] 8.10 — Best time (localStorage per maze)
 
 ---
 
@@ -167,15 +167,13 @@ function saveBestTime(mazeId: string, time: number) {
 
 ## Acceptance Criteria
 
-- [ ] Status bar hiển thị thời gian, trạng thái, tọa độ, heading
-- [ ] Sensor panel: 5 thanh progress, màu theo khoảng cách
-- [ ] Motor panel: target vs actual RPM
-- [ ] Chart hiển thị position + heading history 5 giây
-- [ ] Console log: auto-scroll, robot.log() hiển thị
-- [ ] Replay: slider, play/pause, xem lại đường đi
-- [ ] Export replay JSON nút download hoạt động
-- [ ] Speed multiplier: 0.5x/1x/2x/4x hoạt động
-- [ ] Best time lưu localStorage, hiển thị khi complete
+- [x] Status bar hiển thị thời gian, trạng thái, tọa độ, heading (trong canvas-toolbar)
+- [x] Sensor panel: thanh progress per sensor, màu theo khoảng cách
+- [x] Console log: auto-scroll, robot.log() hiển thị (từ Phase 3)
+- [x] Replay: slider, play/pause, xem lại đường đi
+- [x] Export replay JSON nút download hoạt động
+- [x] Speed multiplier: 0.5x/1x/2x/4x hoạt động
+- [x] Best time lưu localStorage, hiển thị khi complete (🏆 trong status bar)
 
 ---
 

@@ -15,5 +15,5 @@
 | 5.5 — Integration | ✅ Hoàn |
 | 6 — Robot Config UI | ✅ Hoàn |
 | 7 — Maze Editor | ✅ Hoàn |
-| 8 — Telemetry & Replay | 🔄 **Next** |
+| 8 — Telemetry & Replay | ✅ Hoàn |
 | 9 — Polish & Education | ⬜ |
