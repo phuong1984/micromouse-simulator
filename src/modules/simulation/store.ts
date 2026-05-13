@@ -4,7 +4,7 @@ import type { MainToWorker, WorkerToMain } from '../../shared/types/workerMessag
 import { useCodeEditorStore } from '../code-editor/store';
 import { useTelemetryStore } from '../telemetry/store';
 import { useRobotConfigStore } from '../robot-config/store';
-import { MAZE_5x5_SIMPLE } from '../../shared/constants/maze-presets';
+import { useMazeStore } from '../maze/store';
 
 export type SimStatus = 'idle' | 'running' | 'finished' | 'error';
 
@@ -74,7 +74,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
             payload: {
               pythonCode,
               robotSpec: useRobotConfigStore.getState().spec,
-              mazeGrid: MAZE_5x5_SIMPLE,
+              mazeGrid: useMazeStore.getState().mazeGrid,
             },
           });
           break;

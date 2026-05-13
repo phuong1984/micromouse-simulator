@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { SimulationRenderer } from '../modules/renderer';
-import { MAZE_5x5_SIMPLE } from '../shared/constants';
 import { cellToWorld } from '../shared/utils/maze';
 import { BlocklyEditor, MonacoEditor, useCodeEditorStore, updateSensorDropdowns, updateWheelDropdowns } from '../modules/code-editor';
 import { useSimulationStore } from '../modules/simulation';
 import { ConsolePanel } from '../modules/telemetry';
 import { RobotConfig, RobotPreview, useRobotConfigStore } from '../modules/robot-config';
+import { MazeEditor, useMazeStore } from '../modules/maze';
 import './App.css';
 
-type AppTab = 'config' | 'simulation';
+type AppTab = 'config' | 'maze' | 'simulation';
 
 function App() {
   const [appTab, setAppTab] = useState<AppTab>('simulation');
@@ -26,6 +26,7 @@ function App() {
   const sensors = useRobotConfigStore((s) => s.spec.sensors);
   const wheels = useRobotConfigStore((s) => s.spec.wheels);
   const [showSensorRays, setShowSensorRays] = useState(false);
+  const mazeGrid = useMazeStore((s) => s.mazeGrid);
 
   useEffect(() => {
     updateSensorDropdowns(sensors.map(s => s.id));
@@ -75,7 +76,7 @@ function App() {
 
     const renderer = new SimulationRenderer();
     rendererRef.current = renderer;
-    const grid = MAZE_5x5_SIMPLE;
+    const grid = useMazeStore.getState().mazeGrid;
     const startPos = cellToWorld(grid, grid.start.row, grid.start.col);
 
     renderer.init(containerRef.current).then(() => {
@@ -120,8 +121,7 @@ function App() {
   useEffect(() => {
     const renderer = rendererRef.current;
     if (!renderer || simState) return;
-    const grid = MAZE_5x5_SIMPLE;
-    const startPos = cellToWorld(grid, grid.start.row, grid.start.col);
+    const startPos = cellToWorld(mazeGrid, mazeGrid.start.row, mazeGrid.start.col);
     renderer.updateFrame(
       {
         tick: 0,
@@ -135,7 +135,27 @@ function App() {
       robotSpec,
       { showSensorRays, showPathTrail: false, showCellNumbers: false }
     );
-  }, [robotSpec, simState, showSensorRays]);
+  }, [robotSpec, simState, showSensorRays, mazeGrid]);
+
+  useEffect(() => {
+    const renderer = rendererRef.current;
+    if (!renderer) return;
+    renderer.loadMaze(mazeGrid);
+    const startPos = cellToWorld(mazeGrid, mazeGrid.start.row, mazeGrid.start.col);
+    renderer.updateFrame(
+      {
+        tick: 0,
+        robot: { x: startPos.x, y: startPos.y, angle: 0, vx: 0, vy: 0, av: 0 },
+        sensors: {},
+        motorRPMs: [0, 0],
+        isFinished: false,
+        elapsedMs: 0,
+        status: 'idle',
+      },
+      robotSpec,
+      { showSensorRays, showPathTrail: false, showCellNumbers: false }
+    );
+  }, [mazeGrid, robotSpec, showSensorRays]);
 
   return (
     <div className="app-container">
@@ -145,6 +165,12 @@ function App() {
           onClick={() => setAppTab('config')}
         >
           🔧 Robot Config
+        </button>
+        <button
+          className={`app-tab ${appTab === 'maze' ? 'active' : ''}`}
+          onClick={() => setAppTab('maze')}
+        >
+          🧩 Maze Editor
         </button>
         <button
           className={`app-tab ${appTab === 'simulation' ? 'active' : ''}`}
@@ -215,6 +241,9 @@ function App() {
             </div>
             <div ref={containerRef} className="pixi-container" />
           </main>
+        </div>
+        <div className={`tab-panel ${appTab === 'maze' ? 'active' : ''}`}>
+          <MazeEditor />
         </div>
         <div className={`tab-panel ${appTab === 'config' ? 'active' : ''}`}>
           <div className="config-layout">

@@ -18,15 +18,16 @@ export function RobotPreview() {
   const { base, wheels, sensors } = spec;
 
   return (
-    <div className="robot-preview">
-      <svg viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`} className="w-full h-full">
+    <div className="config-right-panel">
+      <div style={{ padding: '24px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`} className="w-full h-full">
         <rect
           x={CX - CELL_SIZE / 2}
           y={CY - CELL_SIZE / 2}
           width={CELL_SIZE}
           height={CELL_SIZE}
           fill="none"
-          stroke="#4b5563"
+          stroke="#767D8C"
           strokeWidth={1}
           strokeDasharray="4 4"
         />
@@ -34,7 +35,7 @@ export function RobotPreview() {
           x={CX}
           y={CY + CELL_SIZE / 2 + 14}
           textAnchor="middle"
-          fill="#6b7280"
+          fill="#767D8C"
           fontSize={10}
         >
           180×180mm cell
@@ -134,6 +135,7 @@ export function RobotPreview() {
           );
         })}
       </svg>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 # Project Tracking — Master Status
 
-> Cập nhật lần cuối: 2026-05-12 (Session 9)
+> Cập nhật lần cuối: 2026-05-13 (Session 12)
 
 ---
 
@@ -16,8 +16,8 @@
 | 5 | Sensor Simulation | 8 | 8h | ✅ Hoàn |
 | 5.5 | Integration | 4 | 3h | ⬜ Chưa bắt đầu |
 | 6 | Robot Config UI | 8 | 8h | ✅ Hoàn — tasks 6.1–6.8 done |
-| 7 | Maze Editor | 7 | 8.5h | ⬜ Chưa bắt đầu |
-| 8 | Telemetry & Replay | 10 | 9h | ⬜ Chưa bắt đầu |
+| 7 | Maze Editor | 10 | 11.5h | ✅ Hoàn — tasks 7.1–7.10 + polish + refactoring + grid lines |
+| 8 | Telemetry & Replay | 10 | 9h | 🔄 Đang làm |
 | 9 | Polish & Education | 8 | 11h | ⬜ Chưa bắt đầu |
 | **TỔNG** | | **84** | **~98.5h** | |
 
@@ -32,8 +32,8 @@
 | 3 | 3 | MicroPython execution engine + console + Run button | ✅ |
 | 4 | 4 | Physics engine + Matter.js tick loop + robot moves | ✅ |
 | 5 | 5 + 5.5 | Sensors + integration test | ✅ |
-| 6 | 6 + 7 | Config + Maze editor | 🔄 Sprint 6 |
-| 7 | 8 + 9 | Telemetry + Polish | ⬜ |
+| 6 | 6 + 7 | Config + Maze editor | ✅ Sprint 6 |
+| 7 | 8 + 9 | Telemetry + Polish | 🔄 Sprint 7 |
 
 ---
 
@@ -179,6 +179,30 @@
 - **Phase 6 CHÍNH THỨC HOÀN TẤT**: tasks 6.1–6.8 + all validation cleanup
 - **Verify**: `npm run build` ✅, `npm run lint` ✅
 
+### 2026-05-12 (Session 10) — Phase 7 Maze Editor
+
+- **generate.ts**: randomized DFS (recursive backtracker) maze generation + difficulty modifiers (easy: remove 30% walls, medium: perfect maze, hard: add 20% dead-ends). Seeded PRNG for deterministic output.
+- **store.ts**: Zustand store with mazeGrid, savedPresets (localStorage), history/future stacks, editMode. CRUD: setRows/setCols (clear inner walls), toggleWall, setStart/setGoal, undo/redo, loadPreset, savePreset/deletePreset, generateMaze, exportMaze/importMaze, resetToDefault, reachable (BFS).
+- **MazeRenderer.ts**: PixiJS class — 5 layers (floor, grid lines, walls, markers, hover). Draw outer walls (always present) + inner walls from cell bitmask. Mouse interaction: hover highlight nearest edge (wall mode) or cell (start/goal mode), click to toggle/set. 10px hit threshold.
+- **MazeConfigPanel.tsx**: Left column form — rows/cols (3-20) inputs, start/goal number inputs, edit mode toggle buttons (Wall/Start/Goal), undo/redo buttons, presets dropdown (9 generated presets 5×5/8×8/16×16 × easy/medium/hard + saved), save preset with name, auto-generate buttons (Easy/Medium/Hard), export JSON (clipboard), import JSON (file or paste), BFS reachability indicator.
+- **MazeEditor.tsx**: Container with config-layout (left panel + right canvas). Creates MazeRenderer on mount, updates on mazeGrid/editMode changes.
+- **App.tsx**: Added "🧩 Maze Editor" tab between Config and Simulation tabs. 3-tab navigation.
+- **App.css**: Added .config-left-panel, .config-right-panel, .config-panel-scroll, .config-section, .config-label-row, .config-mode-btn styles.
+- **simulation/store.ts**: READY handler now reads mazeGrid from useMazeStore instead of hardcoded MAZE_5x5_SIMPLE.
+- **maze-presets.ts**: Added MAZE_8x8_STANDARD (8×8 empty maze).
+- **shared/utils/maze.ts**: Added isReachable() BFS — returns { reachable, steps }.
+- **Verify**: `npm run build` ✅, `npm run lint` ✅
+
+### 2026-05-13 (Session 11) — Phase 7 Polish + BR Corner Fix
+- **Hard maze unreachable fix**: `generateMaze` hard difficulty → `findPathCells()` BFS approach — chỉ thêm walls vào cells không trên start→goal path, đảm bảo reachable 100%
+- **Visual polish**: unified wall color (bỏ OUTER_WALL_COLOR), removed corner fills, minScale=2.5/12, outer wall repositioned outside cells, background color `#394359`, RobotPreview dashed cell `#767D8C`
+- **Corner extensions**: NORTH extend LEFT/RIGHT khi WEST/EAST adjacent, WEST extend DOWN khi SOUTH adjacent
+- **BR corner cross-cell fix**: `hasWall(r-1,c,EAST) || hasWall(r,c,EAST)` cho NORTH right extension; `hasWall(r,c-1,SOUTH) || hasWall(r,c,SOUTH)` cho WEST down extension — fix cả MazeRenderer.ts và SimulationRenderer.ts
+- **SimulationRenderer**: sceneContainer centering, drawMarkers trước drawWalls
+- **MazeEditor**: Ctrl+Z/Y, drag toggle, ResizeObserver→window resize revert
+- **MazeConfigPanel**: download file export, file picker import, bỏ input number start/goal
+- **Verify**: `npm run build` ✅, `npm run lint` ✅
+
 ### 2026-05-09 (Session 2) — Phase 1 Finalization
 - **Task 1.2 COMPLETED**: Draw maze walls (dùng WALL constants, outer boundaries) + start/goal markers
 - **Task 1.3 COMPLETED**: Robot body (hcn xanh #1976d2) + direction arrow (trắng)
@@ -186,3 +210,26 @@
 - **Task 1.7 COMPLETED**: Window resize → recalculate scale + redraw maze
 - **Bug fixes**: RenderOptions export (export type), resize không redraw maze, robot initial position sai, workerMessages.ts interface→type, PixiJS v8 deprecated constructor pattern, ResizePlugin crash, StrictMode double-mount race condition, WebGL context conflict (PixiJS tự tạo canvas riêng)
 - **Phase 1 HOÀN TẤT**: Maze 5×5 + robot hiển thị đúng, auto-scale, resize OK, build/lint pass, 0 lỗi runtime
+
+### 2026-05-13 (Session 12) — Phase 7 Hoàn Tất + Refactoring
+- **Refactoring — Batch 1 (Trivial)**:
+  - `shared/constants/render-colors.ts`: WALL_COLOR, FLOOR_COLOR, START_COLOR, GOAL_COLOR, GRID_LINE_COLOR
+  - `cloneCells()` moved to `shared/utils/maze.ts`
+- **Refactoring — Batch 2 (Low risk)**:
+  - `shared/utils/export-import.ts`: downloadJson(), readFileAsText()
+  - `shared/components/NumberField.tsx`: unified với integer?, inputClassName?
+- **Refactoring — Batch 3 (Moderate)**:
+  - `drawMazeMarkers()` — shared function với alpha/circleSize options
+  - `shared/utils/preset-storage.ts`: generic loadSavedPresets<T>(), persistPresets<T>()
+  - Cả 2 stores updated (maze, robot-config)
+- **Refactoring — Batch 4 (Complex)**:
+  - `shared/utils/pixi-utils.ts`: createPixiApp(), destroyPixiApp(), resizePixiRenderer()
+  - Cả 2 renderers (MazeRenderer, SimulationRenderer) updated
+- **Wheel bounds**: Dynamic min/max — posX ±(baseWidth-wheelWidth)/2, posY ±(baseHeight/2-radius), radius max = baseHeight/2-|posY|, width max = baseWidth-2*|posX|. NumberField auto-clamp qua useEffect (removed per user request, only onBlur + red visual feedback)
+- **Base width/height**: max=168mm (cell 180 - wall 12)
+- **Grid lines**: `drawMazeGridLines()` — dashed lines using `addDashedLine` (batch all segments → single stroke). Visible on top of walls. Bỏ perimeter lines. Shared color (0x888888).
+- **Simulation markers đè walls**: fix draw order (walls trước markers)
+- **Consumers updated**: MazeConfigPanel, RobotConfig, maze/store, robot-config/store, MazeRenderer, SimulationRenderer
+- **Verify**: `npm run build` ✅, `npm run lint` ✅
+- **Phase 7 CHÍNH THỨC HOÀN TẤT**: tasks 7.1–7.10 + polish + refactoring + grid lines
+- **Phase 8 sẵn sàng**: Telemetry & Replay

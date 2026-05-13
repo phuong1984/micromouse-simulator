@@ -116,3 +116,45 @@ export const mazeToWallSegments = (grid: MazeGrid): WallSegment[] => {
   
   return segments;
 };
+
+export function cloneCells(cells: number[][]): number[][] {
+  return cells.map(r => [...r]);
+}
+
+export function isReachable(
+  grid: MazeGrid,
+  start: { row: number; col: number },
+  goal: { row: number; col: number }
+): { reachable: boolean; steps: number } {
+  if (start.row === goal.row && start.col === goal.col)
+    return { reachable: true, steps: 0 };
+
+  const visited: boolean[][] = Array.from({ length: grid.rows }, () => Array(grid.cols).fill(false));
+  const queue: { row: number; col: number; dist: number }[] = [];
+
+  visited[start.row][start.col] = true;
+  queue.push({ row: start.row, col: start.col, dist: 0 });
+
+  const dirs = [
+    { dr: -1, dc: 0, wall: WALL.NORTH },
+    { dr: 1, dc: 0, wall: WALL.SOUTH },
+    { dr: 0, dc: 1, wall: WALL.EAST },
+    { dr: 0, dc: -1, wall: WALL.WEST },
+  ];
+
+  while (queue.length > 0) {
+    const cur = queue.shift()!;
+    for (const d of dirs) {
+      const nr = cur.row + d.dr;
+      const nc = cur.col + d.dc;
+      if (nr >= 0 && nr < grid.rows && nc >= 0 && nc < grid.cols && !visited[nr][nc] && !hasWall(grid, cur.row, cur.col, d.wall)) {
+        if (nr === goal.row && nc === goal.col)
+          return { reachable: true, steps: cur.dist + 1 };
+        visited[nr][nc] = true;
+        queue.push({ row: nr, col: nc, dist: cur.dist + 1 });
+      }
+    }
+  }
+
+  return { reachable: false, steps: -1 };
+}

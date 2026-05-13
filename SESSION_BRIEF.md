@@ -4,37 +4,37 @@
 
 ---
 
-- **Date**: 2026-05-12
-- **Current Phase**: Phase 6 — Robot Config UI (done) → Phase 7 next
-- **Phase Plan**: `plan/06_PHASE_6_ROBOT_CONFIG.md` ✅
-- **Current Tasks**: Phase 6 completed, minor validation fixes done
+- **Date**: 2026-05-13
+- **Current Phase**: Phase 8 — Telemetry & Replay
+- **Phase Plan**: `plan/08_PHASE_8_TELEMETRY.md`
+- **Current Tasks**: 8.1–8.10
 
 ## Last Session Recap
 
-**Session 9 — Phase 6 cleanup + validation fixes.**
+**Session 12 — Phase 7 hoàn tất + codebase refactoring.**
 
 **What was done:**
-- Base width/height max: 200 → 180 (phù hợp cell maze 180mm)
-- Wheel position X/Y: min/max clamped to ±base.width/2, ±base.height/2
-- Sensor position X/Y: same clamping
-- Sensor maxRange max: 360 → 180
-- Sensor FOV max: 360 → 90
-- Validation.ts updated for all above bounds
-- Updated all docs: SESSION_BRIEF, TRACKING, plan, CONFIG_EFFECTS
+- **Phase 7 hoàn tất**: Grid lines nét đứt (cả MazeRenderer + SimulationRenderer), fix thứ tự rendering (grid lines trên cùng), chỉnh parameters cho grid lines visible, bỏ perimeter grid lines.
+- **Refactoring**: 
+  - Shared color constants (`render-colors.ts`) — WALL_COLOR, FLOOR_COLOR, START_COLOR, GOAL_COLOR, GRID_LINE_COLOR
+  - Shared `drawMazeMarkers` + `drawMazeGridLines` trong `maze-render.ts`
+  - `cloneCells` move vào `shared/utils/maze.ts`
+  - `downloadJson` + `readFileAsText` trong `shared/utils/export-import.ts`
+  - Shared `NumberField` component (`shared/components/NumberField.tsx`)
+  - Shared preset-storage utilities
+  - Shared PixiJS init/resize/destroy utilities (`pixi-utils.ts`)
+- **Wheel bounds**: Dynamic min/max theo công thức (posX phụ thuộc wheelWidth, posY phụ thuộc radius, v.v.)
+- **Base width/height**: max = 168mm (passage thực tế)
+- `build` ✅, `lint` ✅
 
 **State hiện tại:**
-- `npm run build` ✅, `npm run lint` ✅
-- Phase 6 fully complete
-- Ready for Phase 7 (Maze Editor)
+- Phase 7 chính thức hoàn tất
+- Phase 8 sẵn sàng
 
-## Next Goal
+## Remaining
 
-Start Phase 7 — Maze Editor.
-
-## Starting Point
-
-- `npm run build` pass, `npm run lint` pass
-- All config validation ranges updated
+- Phase 8: Telemetry & Replay (tasks 8.1–8.10)
+- Phase 9: Polish & Education
 
 ## Blockers
 
@@ -42,6 +42,5 @@ Start Phase 7 — Maze Editor.
 
 ## Notes
 
-- Phase 6 tasks 6.1–6.8 all done
-- MotorSpec merged into WheelSpec (no separate motors array)
-- Phase 7: click toggle wall, drag draw, start/goal, undo/redo, preset selector, BFS validation, serialize
+- MazeRenderer creates separate PixiJS canvas (not sharing with SimulationRenderer)
+- Tab panels stay mounted (CSS visibility toggle) để preserve PixiJS context

@@ -31,6 +31,7 @@ src/
 │   │   ├── RobotPreview.tsx
 │   │   └── store.ts
 │   ├── maze/
+│   │   ├── generate.ts
 │   │   ├── MazeEditor.tsx
 │   │   ├── MazeRenderer.tsx
 │   │   └── store.ts
@@ -67,10 +68,19 @@ src/
 │   │   ├── workerMessages.ts
 │   │   └── telemetry.ts
 │   ├── constants/
+│   │   ├── index.ts
+│   │   ├── render-colors.ts
 │   │   ├── robot-presets.ts
 │   │   └── maze-presets.ts
+│   ├── components/
+│   │   └── NumberField.tsx
 │   └── utils/
-│       └── maze.ts
+│       ├── index.ts
+│       ├── maze.ts
+│       ├── maze-render.ts
+│       ├── export-import.ts
+│       ├── preset-storage.ts
+│       └── pixi-utils.ts
 └── workers/
     └── simulation.worker.ts
 plan/                              # All plan/tracking files
@@ -82,7 +92,7 @@ index.html, package.json, etc.
 
 ## Current Phase & Status
 
-**Current Phase**: 7 — Maze Editor
+**Current Phase**: 8 — Telemetry & Replay
 
 | Phase | Status |
 |-------|--------|
@@ -94,8 +104,8 @@ index.html, package.json, etc.
 | 5 | Sensor Simulation | ✅ Hoàn |
 | 5.5 | Integration | ✅ Hoàn |
 | 6 | Robot Config UI | ✅ Hoàn |
-| 7 | Maze Editor | ⬜ Đang làm |
-| 8 | Telemetry & Replay | ⬜ |
+| 7 | Maze Editor | ✅ Hoàn |
+| 8 | Telemetry & Replay | 🔄 Đang làm |
 | 9 | Polish & Education | ⬜ |
 
 Check `plan/00_TRACKING.md` for detailed status.
@@ -178,7 +188,7 @@ WorkerToMain: { type:'STATE_UPDATE'|'FINISHED'|'PYTHON_ERROR'|'WORKER_ERROR'|'RE
 
 1. Đọc `SESSION_BRIEF.md` để biết mục tiêu session hiện tại
 2. Đọc `plan/00_TRACKING.md` để biết status tổng thể
-3. Đọc file plan của phase đang làm (VD: `plan/06_PHASE_7_MAZE_EDITOR.md`)
+3. Đọc file plan của phase đang làm (VD: `plan/08_PHASE_8_TELEMETRY.md`)
 4. Làm theo tasks từ trên xuống, verify `npm run build && npm run lint` sau mỗi task
 5. Cập nhật checklist trong file plan + `00_TRACKING.md` khi hoàn thành
 6. Gặp vấn đề → check `docs/micromouse_docs/` gốc

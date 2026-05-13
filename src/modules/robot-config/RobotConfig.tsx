@@ -3,6 +3,8 @@ import { useRobotConfigStore } from './store';
 import { validateRobotSpec } from './validation';
 import { useSimulationStore } from '../simulation/store';
 import { DEFAULT_ROBOT } from '../../shared/constants/robot-presets';
+import { NumberField } from '../../shared/components/NumberField';
+import { downloadJson, readFileAsText } from '../../shared/utils/export-import';
 
 type SubTab = 'base' | 'wheels' | 'sensors';
 
@@ -25,54 +27,6 @@ const H: Record<string, string> = {
   fov: 'Field of view. Wider FOV detects obstacles from the side but reduces angular precision.',
   noiseLevel: 'Random measurement error (0 = perfect, 1 = maximum noise). Higher values make readings less reliable.',
 };
-
-function NumberField({
-  label, value, onChange, min, max, step, disabled, help,
-}: {
-  label: string; value: number; onChange: (v: number) => void;
-  min?: number; max?: number; step?: number; disabled?: boolean;
-  help?: string;
-}) {
-  const [local, setLocal] = useState(() => String(value));
-  const [synced, setSynced] = useState(value);
-
-  if (synced !== value) {
-    setSynced(value);
-    setLocal(String(value));
-  }
-
-  const displayHelp = help
-    ? help + '  [ ' + (min != null ? `Min: ${min}` : '') + (min != null && max != null ? ', ' : '') + (max != null ? `Max: ${max}` : '') + ' ]'
-    : undefined;
-
-  return (
-    <label className="config-field">
-      <span className="config-label">
-        {label}
-        {displayHelp && <span className="label-tooltip">{displayHelp}</span>}
-      </span>
-      <input
-        type="number"
-        value={local}
-        onChange={(e) => {
-          const raw = e.target.value;
-          setLocal(raw);
-          const num = parseFloat(raw);
-          if (!isNaN(num)) {
-            const clamped = Math.max(min ?? -Infinity, Math.min(max ?? Infinity, num));
-            if (clamped !== num) {
-              setLocal(String(clamped));
-            }
-            onChange(clamped);
-            setSynced(clamped);
-          }
-        }}
-        min={min} max={max} step={step} disabled={disabled}
-        className="config-input"
-      />
-    </label>
-  );
-}
 
 function SelectField({
   label, value, onChange, options, disabled, help,
@@ -107,8 +61,8 @@ function BaseTab({ disabled }: { disabled?: boolean }) {
 
   return (
     <div className="config-form">
-      <NumberField label="Width (mm)" help={H.baseWidth} value={base.width} onChange={(v) => updateBase({ width: v })} min={20} max={180} disabled={disabled} />
-      <NumberField label="Height (mm)" help={H.baseHeight} value={base.height} onChange={(v) => updateBase({ height: v })} min={20} max={180} disabled={disabled} />
+      <NumberField label="Width (mm)" help={H.baseWidth} value={base.width} onChange={(v) => updateBase({ width: v })} min={20} max={168} disabled={disabled} />
+      <NumberField label="Height (mm)" help={H.baseHeight} value={base.height} onChange={(v) => updateBase({ height: v })} min={20} max={168} disabled={disabled} />
       <NumberField label="Mass (g)" help={H.mass} value={base.mass} onChange={(v) => updateBase({ mass: v })} min={10} max={5000} disabled={disabled} />
       <SelectField
         label="Shape"
@@ -161,10 +115,10 @@ function WheelsTab({ disabled }: { disabled?: boolean }) {
           </div>
           {!collapsed[w.id] && (
             <>
-              <NumberField label="Pos X (mm)" help={H.x} value={w.position.x} onChange={(v) => updateWheel(w.id, { position: { x: v, y: w.position.y } })} min={-spec.base.width / 2} max={spec.base.width / 2} disabled={disabled} />
-              <NumberField label="Pos Y (mm)" help={H.y} value={w.position.y} onChange={(v) => updateWheel(w.id, { position: { x: w.position.x, y: v } })} min={-spec.base.height / 2} max={spec.base.height / 2} disabled={disabled} />
-              <NumberField label="Radius (mm)" help={H.radius} value={w.radius} onChange={(v) => updateWheel(w.id, { radius: v })} min={1} max={50} disabled={disabled} />
-              <NumberField label="Width (mm)" help={H.wheelWidth} value={w.width} onChange={(v) => updateWheel(w.id, { width: v })} min={1} max={30} disabled={disabled} />
+              <NumberField label="Pos X (mm)" help={H.x} value={w.position.x} onChange={(v) => updateWheel(w.id, { position: { x: v, y: w.position.y } })} min={-(spec.base.width - w.width) / 2} max={(spec.base.width - w.width) / 2} disabled={disabled} />
+              <NumberField label="Pos Y (mm)" help={H.y} value={w.position.y} onChange={(v) => updateWheel(w.id, { position: { x: w.position.x, y: v } })} min={-(spec.base.height / 2 - w.radius)} max={spec.base.height / 2 - w.radius} disabled={disabled} />
+              <NumberField label="Radius (mm)" help={H.radius} value={w.radius} onChange={(v) => updateWheel(w.id, { radius: v })} min={1} max={Math.max(1, spec.base.height / 2 - Math.abs(w.position.y))} disabled={disabled} />
+              <NumberField label="Width (mm)" help={H.wheelWidth} value={w.width} onChange={(v) => updateWheel(w.id, { width: v })} min={1} max={Math.max(1, spec.base.width - 2 * Math.abs(w.position.x))} disabled={disabled} />
               <NumberField label="Max RPM" help={H.maxRPM} value={w.maxRPM} onChange={(v) => updateWheel(w.id, { maxRPM: v })} min={1} max={5000} disabled={disabled} />
               <NumberField label="Max Torque (N·mm)" help={H.maxTorque} value={w.maxTorque} onChange={(v) => updateWheel(w.id, { maxTorque: v })} min={0.1} max={100} step={0.1} disabled={disabled} />
               <NumberField label="Gear Ratio" help={H.gearRatio} value={w.gearRatio} onChange={(v) => updateWheel(w.id, { gearRatio: v })} min={0.1} max={20} step={0.1} disabled={disabled} />
@@ -259,33 +213,23 @@ export function RobotConfig() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
-    const json = JSON.stringify(spec, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `robot-config-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadJson(JSON.stringify(spec, null, 2), `robot-config-${Date.now()}.json`);
   };
 
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target?.result as string);
-        if (!data.base || !data.wheels) {
-          alert('Invalid robot config file: missing base or wheels');
-          return;
-        }
-        loadPreset(data);
-      } catch {
-        alert('Invalid JSON file');
+    try {
+      const text = await readFileAsText(file);
+      const data = JSON.parse(text);
+      if (!data.base || !data.wheels) {
+        alert('Invalid robot config file: missing base or wheels');
+        return;
       }
-    };
-    reader.readAsText(file);
+      loadPreset(data);
+    } catch {
+      alert('Invalid JSON file');
+    }
     e.target.value = '';
   };
 

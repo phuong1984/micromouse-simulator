@@ -14,6 +14,16 @@ export const MAZE_5x5_SIMPLE: MazeGrid = {
   goal: { row: 0, col: 4 },
 };
 
+export const MAZE_8x8_STANDARD: MazeGrid = {
+  rows: 8,
+  cols: 8,
+  cellSize: 180,
+  wallThickness: 12,
+  cells: createEmptyCells(8, 8),
+  start: { row: 7, col: 0 },
+  goal: { row: 0, col: 7 },
+};
+
 export const MAZE_16x16_STANDARD: MazeGrid = {
   rows: 16,
   cols: 16,

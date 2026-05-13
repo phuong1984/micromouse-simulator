@@ -1,140 +1,88 @@
 # Phase 7 — Maze Editor
 
-> **Goal**: User tạo maze tùy ý: click toggle wall, set start/goal, undo/redo
-> **Ước tính**: 8.5h
+> **Goal**: User tạo maze tùy ý: click toggle wall, set start/goal, undo/redo, auto-generate, export/import
+> **Ước tính**: 11.5h
 > **Input**: Phase 0 (types, utils), Phase 1 (renderer)
-> **Output**: Maze editor hoạt động trong canvas
+> **Output**: Maze editor tab với PixiJS canvas interactive + config panel
 
 ---
 
 ## Completed: ✅
 
-- [ ] 7.1 — Canvas/Grid-based editor
-- [ ] 7.2 — Right-click → set Start / Goal
-- [ ] 7.3 — Undo/redo
-- [ ] 7.4 — Preset selector
-- [ ] 7.5 — BFS reachability validation
-- [ ] 7.6 — Serialize/deserialize
-- [ ] 7.7 — Editor disabled khi running
+- [x] 7.1 — generate.ts: auto maze generation (randomized DFS + difficulty easy/medium/hard)
+- [x] 7.2 — maze-presets.ts: added MAZE_8x8_STANDARD
+- [x] 7.3 — maze.ts utils: added isReachable() BFS
+- [x] 7.4 — store.ts: Zustand store (CRUD, history/future, save/load presets, export/import JSON)
+- [x] 7.5 — MazeRenderer.ts: PixiJS interactive canvas (draw, hover, click toggle/set)
+- [x] 7.6 — MazeConfigPanel.tsx: left column form
+- [x] 7.7 — MazeEditor.tsx + index.ts: container + re-exports
+- [x] 7.8 — App.tsx + App.css: thêm tab Maze Editor giữa Config và Simulation
+- [x] 7.9 — simulation/store.ts: đọc maze từ maze store
+- [x] 7.10 — build + lint verify
+
+## Polish (đã hoàn)
+
+- [x] Keyboard shortcuts: Ctrl+Z (undo), Ctrl+Y (redo) — `MazeEditor.tsx:52-66`
+- [x] Drag to toggle multiple walls consecutively — `MazeRenderer.ts:278-284`
+- [x] ResizeObserver cho PixiJS canvas — `MazeEditor.tsx` thay window resize event
+
+## Refactoring (đã hoàn)
+
+- [x] Shared color constants `render-colors.ts` (WALL_COLOR, FLOOR_COLOR, START_COLOR, GOAL_COLOR, GRID_LINE_COLOR)
+- [x] `cloneCells()` moved to `shared/utils/maze.ts`
+- [x] `downloadJson` + `readFileAsText` trong `shared/utils/export-import.ts`
+- [x] Shared `NumberField` component (`shared/components/NumberField.tsx`) — unified parseFloat/integer, optional min/max
+- [x] Shared `drawMazeMarkers()` trong `maze-render.ts` — alpha/circleSize options
+- [x] Shared preset-storage utilities (`shared/utils/preset-storage.ts`)
+- [x] Shared PixiJS init/resize/destroy (`shared/utils/pixi-utils.ts`)
+- [x] Dynamic wheel bounds (posX ±(baseWidth-wheelWidth)/2, posY ±(baseHeight/2-radius), max radius/width phụ thuộc vị trí)
+- [x] Base width/height max 168mm
+- [x] Grid lines: dashed, batch rendering, on top of walls, skip perimeter (`drawMazeGridLines`)
+- [x] Simulation markers draw order: walls → markers → grid lines
+
+## Phase 7 HOÀN TẤT ✅
 
 ---
 
-## Task Details
+## Module Structure
 
-### 7.1 — Canvas Editor
-**Deliverable**: Click cạnh giữa 2 cells → toggle wall; drag → vẽ liên tục  
-**Ước tính**: 2h
-
-- Overlay canvas trên PixiJS canvas
-- Tính vị trí cạnh dựa trên mouse position + cellSize × scale
-- Click: toggle wall bit (NORTH/SOUTH/EAST/WEST của cell tương ứng)
-- Drag: liên tục toggle walls khi di chuột
-- Visual: active wall = stroke đậm, inactive = stroke mờ dashed
-
-**Hitbox**: padding 8px mỗi phía cạnh để dễ click
-
-### 7.2 — Start/Goal Placement
-**Deliverable**: Right-click cell → set Start hoặc Goal  
-**Ước tính**: 1h
-
-- Mode toggle: Wall mode / Start mode / Goal mode
-- Right-click ô → set start/goal
-- Visual: start = marker xanh, goal = marker đỏ
-
-### 7.3 — Undo/Redo
-**Deliverable**: Immer + stack snapshots  
-**Ước tính**: 1h
-
-```typescript
-// Lưu snapshots của cells array (2D number[][])
-history: number[][][] = [];
-future: number[][][] = [];
-
-function undo() {
-  if (history.length === 0) return;
-  future.push(currentCells);
-  currentCells = history.pop()!;
-  updateMaze();
-}
-
-function redo() {
-  if (future.length === 0) return;
-  history.push(currentCells);
-  currentCells = future.pop()!;
-  updateMaze();
-}
+```
+src/modules/maze/
+├── index.ts              # Re-exports
+├── store.ts              # Zustand: mazeGrid, savedPresets, history/future, editMode, CRUD
+├── MazeEditor.tsx        # Container: left panel + right canvas
+├── MazeRenderer.ts       # PixiJS interactive canvas class
+├── MazeConfigPanel.tsx   # Left column form
+└── generate.ts           # generateMaze() — randomized DFS + difficulty
 ```
 
-### 7.4 — Preset Selector
-**Deliverable**: Dropdown: 5×5, 8×8, 16×16, Empty  
-**Ước tính**: 45p
+## Maze Config Options
 
-```typescript
-const MAZE_PRESETS = {
-  '5×5 Simple': MAZE_5x5_SIMPLE,
-  '8×8 Standard': MAZE_8x8_STANDARD,
-  '16×16 Competition': MAZE_16x16_STANDARD,
-  'Empty': createEmptyMaze(rows, cols),
-};
-```
+| Field | Type | Min | Max | Default | Ghi chú |
+|-------|------|:---:|:---:|:-------:|---------|
+| rows | number | 3 | 20 | 5 | Số hàng |
+| cols | number | 3 | 20 | 5 | Số cột |
+| cellSize | fixed | — | — | 180mm | Chuẩn IEEE |
+| wallThickness | fixed | — | — | 12mm | |
 
-### 7.5 — Reachability Validation
-**Deliverable**: BFS check trước khi Run  
-**Ước tính**: 1h
+## Edit Modes
 
-```typescript
-function isReachable(grid: MazeGrid, start: CellPos, goal: CellPos): boolean {
-  const visited = new Set<string>();
-  const queue = [start];
-  visited.add(`${start.row},${start.col}`);
-  
-  while (queue.length > 0) {
-    const { row, col } = queue.shift()!;
-    if (row === goal.row && col === goal.col) return true;
-    
-    // Check 4 directions
-    for (const dir of [NORTH, EAST, SOUTH, WEST]) {
-      if (!hasWall(grid, row, col, dir)) {
-        const [nr, nc, _] = getNeighbor(row, col, dir);
-        const key = `${nr},${nc}`;
-        if (!visited.has(key)) {
-          visited.add(key);
-          queue.push({ row: nr, col: nc });
-        }
-      }
-    }
-  }
-  return false;
-}
-```
+| Mode | Hành động | Visual |
+|------|-----------|--------|
+| Wall (default) | Click cạnh → toggle wall | Hover highlight blue |
+| Start | Click cell → set start | Green fill + circle |
+| Goal | Click cell → set goal | Red fill + circle |
 
-### 7.6 — Serialize/Deserialize
-**Deliverable**: URL encoding cho share  
-**Ước tính**: 45p
+## Auto-Generation Algorithm
 
-```typescript
-function encodeMaze(grid: MazeGrid): string {
-  const flat = grid.cells.flat();
-  const hex = flat.map(v => v.toString(16)).join('');
-  return `${grid.cols}x${grid.rows}x${grid.cellSize}_${hex}_${grid.start.row},${grid.start.col}_${grid.goal.row},${grid.goal.col}`;
-}
+- Seeded PRNG (LCG) for deterministic output
+- Randomized DFS (recursive backtracker) → perfect maze
+- Easy: remove 30% inner walls → wider passages
+- Medium: keep perfect maze
+- Hard: add 20% dead-end walls → more complex
 
-function decodeMaze(encoded: string): MazeGrid { ... }
-```
+## Presets
 
-### 7.7 — Disabled Khi Running
-**Deliverable**: Editor blocked khi `status === 'running' || status === 'paused'`  
-**Ước tính**: 15p
-
----
-
-## Acceptance Criteria
-
-- [ ] Click cạnh → toggle wall
-- [ ] Drag → vẽ liên tục
-- [ ] Right-click → set start/goal
-- [ ] Undo (Ctrl+Z) / Redo (Ctrl+Y) hoạt động
-- [ ] Preset selector load đúng maze
-- [ ] Chạy validation → thông báo nếu goal unreachable
-- [ ] Serialize → URL update, load từ URL → maze đúng
-- [ ] Editor disabled khi simulation running
+- 9 generated presets: 5×5 / 8×8 / 16×16 × Easy / Medium / Hard
+- User saved presets in localStorage (key: 'maze-presets')
+- Default button resets to empty 5×5

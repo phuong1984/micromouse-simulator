@@ -1,8 +1,11 @@
 import * as PIXI from 'pixi.js';
-import { MazeGrid, WALL } from '../../shared/types/maze';
-import { RobotSpec } from '../../shared/types/robot';
-import { SimState } from '../../shared/types/simulation';
+import type { MazeGrid } from '../../shared/types/maze';
+import type { RobotSpec } from '../../shared/types/robot';
+import type { SimState } from '../../shared/types/simulation';
 import { RenderOptions } from './types';
+import { drawMazeWalls, drawMazeMarkers, drawMazeGridLines, computeMazeScale, computeMazeOffset } from '../../shared/utils/maze-render';
+import { WALL_COLOR, FLOOR_COLOR, START_COLOR, GOAL_COLOR, GRID_LINE_COLOR } from '../../shared/constants/render-colors';
+import { createPixiApp, destroyPixiApp, resizePixiRenderer } from '../../shared/utils/pixi-utils';
 
 const BASE_COLOR = 0x1e3a5f;
 const BASE_STROKE = 0x3b82f6;
@@ -25,6 +28,7 @@ export class SimulationRenderer {
   private robotSensors!: PIXI.Graphics;
   private sensorFov!: PIXI.Graphics;
   private sensorRays!: PIXI.Graphics;
+  private sceneContainer!: PIXI.Container;
   private scale: number = 1;
   private currentGrid: MazeGrid | null = null;
   private containerRef: HTMLElement | null = null;
@@ -34,27 +38,18 @@ export class SimulationRenderer {
     this.destroyed = false;
     this.containerRef = container;
 
-    const app = new PIXI.Application();
-    await app.init({
-      backgroundAlpha: 0,
-      resolution: window.devicePixelRatio,
-      autoDensity: true,
-    });
+    const app = await createPixiApp(container);
+    if (!app || this.destroyed) { if (app) destroyPixiApp(app); return; }
 
-    if (this.destroyed) {
-      app.destroy(true, { children: true });
-      return;
-    }
-
-    container.appendChild(app.canvas);
-
+    this.sceneContainer = new PIXI.Container();
     this.mazeLayer = new PIXI.Graphics();
     this.robotLayer = new PIXI.Container();
     this.overlayLayer = new PIXI.Container();
 
-    app.stage.addChild(this.mazeLayer);
-    app.stage.addChild(this.robotLayer);
-    app.stage.addChild(this.overlayLayer);
+    this.sceneContainer.addChild(this.mazeLayer);
+    this.sceneContainer.addChild(this.robotLayer);
+    this.sceneContainer.addChild(this.overlayLayer);
+    app.stage.addChild(this.sceneContainer);
 
     this.robotBody = new PIXI.Graphics();
     this.directionArrow = new PIXI.Graphics();
@@ -82,58 +77,21 @@ export class SimulationRenderer {
     this.mazeLayer.clear();
     this.scale = this.computeScale(grid);
 
-    const wallColor = 0x2d2d2d;
-    const floorColor = 0xf5f5f0;
-    const startColor = 0x2ecc71;
-    const goalColor = 0xe74c3c;
-
-    this.mazeLayer.rect(0, 0, grid.cols * grid.cellSize * this.scale, grid.rows * grid.cellSize * this.scale);
-    this.mazeLayer.fill(floorColor);
-
-    this.drawWalls(grid, wallColor);
-    this.drawMarkers(grid, startColor, goalColor);
-  }
-
-  private drawWalls(grid: MazeGrid, color: number): void {
     const s = this.scale;
+    const cs = grid.cellSize * s;
     const wt = grid.wallThickness * s;
-    const cs = grid.cellSize * s;
+    const totalW = grid.cols * cs;
+    const totalH = grid.rows * cs;
 
-    for (let row = 0; row < grid.rows; row++) {
-      for (let col = 0; col < grid.cols; col++) {
-        const cell = grid.cells[row][col];
-        const x = col * cs;
-        const y = row * cs;
+    this.mazeLayer.rect(0, 0, totalW, totalH).fill(FLOOR_COLOR);
 
-        if (cell & WALL.NORTH) {
-          this.mazeLayer.rect(x, y, cs, wt).fill(color);
-        }
-        if (cell & WALL.WEST) {
-          this.mazeLayer.rect(x, y, wt, cs).fill(color);
-        }
-      }
-    }
+    drawMazeWalls(this.mazeLayer, grid, s, WALL_COLOR);
+    drawMazeMarkers(this.mazeLayer, grid, s, START_COLOR, GOAL_COLOR, { alpha: 0.5 });
+    drawMazeGridLines(this.mazeLayer, grid, s, GRID_LINE_COLOR);
 
-    this.mazeLayer.rect(0, 0, grid.cols * cs, wt).fill(color);
-    this.mazeLayer.rect(0, 0, wt, grid.rows * cs).fill(color);
-    this.mazeLayer.rect(0, grid.rows * cs - wt, grid.cols * cs, wt).fill(color);
-    this.mazeLayer.rect(grid.cols * cs - wt, 0, wt, grid.rows * cs).fill(color);
-  }
-
-  private drawMarkers(grid: MazeGrid, startColor: number, goalColor: number): void {
-    const s = this.scale;
-    const cs = grid.cellSize * s;
-    const halfCs = cs / 2;
-
-    const startCx = grid.start.col * cs + halfCs;
-    const startCy = grid.start.row * cs + halfCs;
-    this.mazeLayer.rect(startCx - halfCs, startCy - halfCs, cs, cs)
-      .fill({ color: startColor, alpha: 0.5 });
-
-    const goalCx = grid.goal.col * cs + halfCs;
-    const goalCy = grid.goal.row * cs + halfCs;
-    this.mazeLayer.rect(goalCx - halfCs, goalCy - halfCs, cs, cs)
-      .fill({ color: goalColor, alpha: 0.5 });
+    const off = computeMazeOffset(this.app!.screen.width, this.app!.screen.height, totalW, totalH, wt);
+    this.sceneContainer.x = off.x;
+    this.sceneContainer.y = off.y;
   }
 
   updateFrame(state: SimState, robotSpec: RobotSpec, options: RenderOptions): void {
@@ -277,16 +235,13 @@ export class SimulationRenderer {
 
   destroy(): void {
     this.destroyed = true;
-    if (!this.app) return;
-    this.app.destroy(true, { children: true });
+    destroyPixiApp(this.app);
     this.app = null;
   }
 
   resize(): void {
-    if (!this.containerRef || !this.containerRef.parentElement || !this.app) return;
-
-    const rect = this.containerRef.parentElement.getBoundingClientRect();
-    this.app.renderer.resize(rect.width, rect.height);
+    const size = resizePixiRenderer(this.app, this.containerRef);
+    if (!size) return;
 
     if (this.currentGrid) {
       this.scale = this.computeScale(this.currentGrid);
@@ -296,12 +251,7 @@ export class SimulationRenderer {
 
   private computeScale(grid: MazeGrid): number {
     if (!this.containerRef || !this.containerRef.parentElement) return 1;
-
     const rect = this.containerRef.parentElement.getBoundingClientRect();
-    const maxW = rect.width * 0.9;
-    const maxH = rect.height * 0.9;
-    const mazeW = grid.cols * grid.cellSize;
-    const mazeH = grid.rows * grid.cellSize;
-    return Math.min(maxW / mazeW, maxH / mazeH);
+    return computeMazeScale(rect.width, rect.height, grid);
   }
 }

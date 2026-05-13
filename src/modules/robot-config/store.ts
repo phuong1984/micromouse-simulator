@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { RobotSpec, BaseSpec, WheelSpec, SensorSpec } from '../../shared/types/robot';
 import { DEFAULT_ROBOT } from '../../shared/constants/robot-presets';
+import { loadSavedPresets, persistPresets } from '../../shared/utils/preset-storage';
 
 function nextId(ids: string[], prefix: string, max: number): string {
   const existing = new Set(ids);
@@ -11,17 +12,7 @@ function nextId(ids: string[], prefix: string, max: number): string {
   return '';
 }
 
-function loadSavedPresets(): RobotSpec[] {
-  try {
-    return JSON.parse(localStorage.getItem('robot-presets') || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function persistPresets(presets: RobotSpec[]): void {
-  localStorage.setItem('robot-presets', JSON.stringify(presets));
-}
+const ROBOT_STORAGE_KEY = 'robot-presets';
 
 export interface RobotConfigStore {
   spec: RobotSpec;
@@ -40,7 +31,7 @@ export interface RobotConfigStore {
 
 export const useRobotConfigStore = create<RobotConfigStore>((set, get) => ({
   spec: { ...DEFAULT_ROBOT, id: 'custom', name: 'Custom Robot' },
-  savedPresets: loadSavedPresets(),
+  savedPresets: loadSavedPresets<RobotSpec>(ROBOT_STORAGE_KEY),
 
   updateBase: (data) =>
     set((s) => ({ spec: { ...s.spec, base: { ...s.spec.base, ...data } } })),
@@ -115,14 +106,14 @@ export const useRobotConfigStore = create<RobotConfigStore>((set, get) => ({
     const { spec, savedPresets } = get();
     const newPreset: RobotSpec = { ...spec, id: name, name };
     const updated = [...savedPresets.filter((p) => p.id !== name), newPreset];
-    persistPresets(updated);
+    persistPresets(ROBOT_STORAGE_KEY, updated);
     set({ savedPresets: updated });
   },
 
   deletePreset: (id) => {
     const { savedPresets } = get();
     const updated = savedPresets.filter((p) => p.id !== id);
-    persistPresets(updated);
+    persistPresets(ROBOT_STORAGE_KEY, updated);
     set({ savedPresets: updated });
   },
 }));
