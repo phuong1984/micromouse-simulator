@@ -13,9 +13,9 @@
 - [ ] 9.2 — Hint system
 - [ ] 9.3 — Example programs
 - [ ] 9.4 — Flood-fill overlay
-- [ ] 9.5 — Responsive layout
+- [x] 9.5 — Responsive layout
 - [ ] 9.6 — Theme toggle
-- [ ] 9.7 — Keyboard shortcuts
+- [x] 9.7 — Keyboard shortcuts
 - [ ] 9.8 — Share URL
 
 ---
@@ -147,9 +147,9 @@ Use URL hash fragment: `https://app.com/#<base64data>`
 - [ ] Hint system detect stuck robot, gợi ý hữu ích
 - [ ] 3+ example programs hoạt động
 - [ ] Flood-fill overlay toggle on/off
-- [ ] App usable trên mobile (responsive)
+- [x] App usable trên mobile (responsive)
 - [ ] Dark/light mode toggle hoạt động
-- [ ] Keyboard shortcuts hoạt động
+- [x] Keyboard shortcuts hoạt động
 - [ ] Share URL encode/decode đúng, load state từ URL
 
 ---

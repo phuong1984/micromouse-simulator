@@ -1,3 +1,7 @@
+:root {
+  --accent-blue: #60a5fa;
+}
+
 .app-container {
   display: flex;
   flex-direction: column;
@@ -31,7 +35,7 @@
 }
 
 .app-tab.active {
-  color: #60a5fa;
+  color: var(--accent-blue);
   border-bottom-color: #3b82f6;
   background: #1f2937;
 }
@@ -215,7 +219,7 @@
 }
 
 .config-sub-tab.active {
-  color: #60a5fa;
+  color: var(--accent-blue);
   border-bottom-color: #3b82f6;
   background: #1f2937;
 }
@@ -354,7 +358,7 @@ select.config-input {
 .btn-add {
   padding: 6px 12px;
   font-size: 12px;
-  color: #60a5fa;
+  color: var(--accent-blue);
   background: transparent;
   border: 1px dashed #374151;
   border-radius: 4px;
@@ -520,7 +524,7 @@ select.config-input {
 }
 
 .config-mode-btn.active {
-  color: #60a5fa;
+  color: var(--accent-blue);
   border-color: #3b82f6;
   background: #1e3a5f;
 }
@@ -555,7 +559,7 @@ select.config-input {
   min-height: 0;
 }
 
-.sensor-panel {
+.sensor-column {
   width: 160px;
   min-width: 140px;
   background: #111827;
@@ -563,13 +567,19 @@ select.config-input {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  overflow-y: auto;
 }
 
-.sensor-panel-header {
+.sensor-panel, .motor-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.sensor-panel-header, .motor-panel-header {
   padding: 6px 10px;
   font-size: 11px;
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--accent-blue);
   background: #1f2937;
   border-bottom: 1px solid #374151;
   text-transform: uppercase;
@@ -577,13 +587,11 @@ select.config-input {
   flex-shrink: 0;
 }
 
-.sensor-panel-body {
-  flex: 1;
-  overflow-y: auto;
+.sensor-panel-body, .motor-panel-body {
   padding: 6px;
 }
 
-.sensor-empty {
+.sensor-empty, .motor-empty {
   color: #6b7280;
   font-size: 11px;
   text-align: center;
@@ -591,21 +599,21 @@ select.config-input {
   font-style: italic;
 }
 
-.sensor-row {
+.sensor-row, .motor-row {
   display: flex;
   flex-direction: column;
   gap: 2px;
   margin-bottom: 8px;
 }
 
-.sensor-label {
+.sensor-label, .motor-label {
   font-size: 10px;
   color: #9ca3af;
   font-weight: 500;
   text-transform: lowercase;
 }
 
-.sensor-bar-track {
+.sensor-bar-track, .motor-bar-track {
   height: 8px;
   background: #1f2937;
   border-radius: 4px;
@@ -613,14 +621,14 @@ select.config-input {
   border: 1px solid #374151;
 }
 
-.sensor-bar-fill {
+.sensor-bar-fill, .motor-bar-fill {
   height: 100%;
   border-radius: 3px;
   transition: width 0.1s ease, background-color 0.1s ease;
   min-width: 2px;
 }
 
-.sensor-value {
+.sensor-value, .motor-value {
   font-size: 10px;
   font-family: 'Courier New', monospace;
   text-align: right;
@@ -640,7 +648,7 @@ select.config-input {
   padding: 6px 10px;
   font-size: 11px;
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--accent-blue);
   background: #1f2937;
   border-bottom: 1px solid #374151;
   text-transform: uppercase;
@@ -741,7 +749,7 @@ select.config-input {
 
 .replay-btn-export:hover {
   border-color: #3b82f6;
-  color: #60a5fa;
+  color: var(--accent-blue);
 }
 
 .replay-btn-clear:hover {
@@ -772,7 +780,84 @@ select.config-input {
 }
 
 .replay-speed-btn.active {
-  color: #60a5fa;
+  color: var(--accent-blue);
   border-color: #3b82f6;
   background: rgba(59, 130, 246, 0.1);
+}
+
+.mobile-tabs {
+  display: none;
+  height: 36px;
+  background: #111827;
+  border-bottom: 1px solid #374151;
+  flex-shrink: 0;
+}
+
+.mobile-tab {
+  flex: 1;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.mobile-tab:hover {
+  color: #e5e7eb;
+  background: #1f2937;
+}
+
+.mobile-tab.active {
+  color: var(--accent-blue);
+  border-bottom-color: #3b82f6;
+  background: #1f2937;
+}
+
+@media (max-width: 1024px) {
+  .mobile-tabs {
+    display: flex;
+  }
+
+  .simulation-layout {
+    flex-direction: column;
+  }
+
+  .simulation-layout > .code-panel {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    max-height: 45vh;
+    border-right: none;
+    border-bottom: 1px solid #374151;
+  }
+
+  .simulation-layout > .sensor-column {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 1px solid #374151;
+    max-height: 40vh;
+  }
+
+  .simulation-layout > .replay-panel {
+    width: 100%;
+    min-width: 0;
+    border-left: none;
+    border-top: 1px solid #374151;
+  }
+
+  .canvas-panel {
+    min-height: 40vh;
+  }
+
+  .code-panel {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
 }

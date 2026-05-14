@@ -11,7 +11,7 @@
 
 - [x] 8.1 — Status Bar (inside canvas-toolbar)
 - [x] 8.2 — Sensor Panel (between code-panel and canvas-panel)
-- [ ] 8.3 — Motor Panel (removed per user decision)
+- [x] 8.3 — Motor Panel (simplified: RPM per wheel, in sensor-column)
 - [ ] 8.4 — Position/Heading Chart (removed per user decision)
 - [x] 8.5 — Console/Log Panel (from Phase 3)
 - [x] 8.6 — ReplayRecorder (Worker-side, every 3 ticks)

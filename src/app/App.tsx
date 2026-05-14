@@ -4,9 +4,10 @@ import { cellToWorld } from '../shared/utils/maze';
 import { playSound } from '../shared/utils/celebration-sound';
 import { BlocklyEditor, MonacoEditor, useCodeEditorStore, updateSensorDropdowns, updateWheelDropdowns } from '../modules/code-editor';
 import { useSimulationStore } from '../modules/simulation';
-import { ConsolePanel, StatusBar, SensorPanel, ReplayPlayer, useTelemetryStore } from '../modules/telemetry';
+import { ConsolePanel, StatusBar, SensorPanel, MotorPanel, ReplayPlayer, useTelemetryStore } from '../modules/telemetry';
 import { RobotConfig, RobotPreview, useRobotConfigStore } from '../modules/robot-config';
 import { MazeEditor, useMazeStore } from '../modules/maze';
+import { useMediaQuery } from '../shared/utils/media-query';
 import './App.css';
 
 type AppTab = 'config' | 'maze' | 'simulation';
@@ -29,8 +30,12 @@ function App() {
   const sensors = useRobotConfigStore((s) => s.spec.sensors);
   const wheels = useRobotConfigStore((s) => s.spec.wheels);
   const [showSensorRays, setShowSensorRays] = useState(false);
+  const [simView, setSimView] = useState<'code' | 'sensor' | 'replay'>('code');
+  const isMobile = useMediaQuery('(max-width: 1024px)');
   const prevStatusRef = useRef(simStatus);
   const mazeGrid = useMazeStore((s) => s.mazeGrid);
+  const mazeUndo = useMazeStore((s) => s.undo);
+  const mazeRedo = useMazeStore((s) => s.redo);
 
   useEffect(() => {
     updateSensorDropdowns(sensors.map(s => s.id));
@@ -164,6 +169,57 @@ function App() {
   }, [mazeGrid, robotSpec, showSensorRays]);
 
   useEffect(() => {
+    const handleShortcuts = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const tag = target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (target.closest('.monaco-editor') || target.closest('.blocklySvg')) return;
+
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        if (simStatus === 'running') simStop();
+        else simStart();
+        return;
+      }
+
+      if (e.key === 'r' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        if (simStatus !== 'idle') simReset();
+        return;
+      }
+
+      if (e.key === 's' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        if (simStatus === 'running') simStop();
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        if (!e.shiftKey) { e.preventDefault(); mazeUndo(); }
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault(); mazeRedo();
+        return;
+      }
+
+      if (e.key === 'F11') {
+        e.preventDefault();
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleShortcuts);
+    return () => window.removeEventListener('keydown', handleShortcuts);
+  }, [simStatus, simStart, simStop, simReset, mazeUndo, mazeRedo]);
+
+  useEffect(() => {
     const prev = prevStatusRef.current;
     if (simStatus === 'finished' && prev !== 'finished') {
       if (finishReason === 'goal') {
@@ -204,54 +260,68 @@ function App() {
 
       <div className="app-content">
         <div className={`tab-panel ${appTab === 'simulation' ? 'active' : ''}`}>
+          {isMobile && (
+            <nav className="mobile-tabs">
+              <button className={`mobile-tab ${simView === 'code' ? 'active' : ''}`} onClick={() => setSimView('code')}>Code</button>
+              <button className={`mobile-tab ${simView === 'sensor' ? 'active' : ''}`} onClick={() => setSimView('sensor')}>Sensors</button>
+              <button className={`mobile-tab ${simView === 'replay' ? 'active' : ''}`} onClick={() => setSimView('replay')}>Replay</button>
+            </nav>
+          )}
           <div className="simulation-layout">
-            <aside className="code-panel">
-              <div className="flex border-b border-gray-700">
-                <button
-                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-                    activeTab === 'blockly'
-                      ? 'bg-gray-800 text-white border-b-2 border-blue-500'
-                      : 'bg-gray-900 text-gray-400 hover:text-gray-200'
-                  }`}
-                  id="tab-blockly"
-                  onClick={() => setActiveTab('blockly')}
-                >
-                  Blockly
-                </button>
-                <button
-                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-                    activeTab === 'monaco'
-                      ? 'bg-gray-800 text-white border-b-2 border-blue-500'
-                      : 'bg-gray-900 text-gray-400 hover:text-gray-200'
-                  }`}
-                  id="tab-monaco"
-                  onClick={() => setActiveTab('monaco')}
-                >
-                  Python
-                </button>
-                <div className="flex items-center gap-1 px-2 border-l border-gray-700">
-                  {simStatus === 'running' ? (
-                    <button onClick={simStop} className="run-btn run-btn-stop">⏹</button>
-                  ) : simStatus === 'finished' || simStatus === 'error' ? (
-                    <button onClick={simReset} className="run-btn run-btn-reset">↺</button>
-                  ) : (
-                    <button onClick={simStart} className="run-btn run-btn-start">▶</button>
-                  )}
+            {(!isMobile || simView === 'code') && (
+              <aside className="code-panel">
+                <div className="flex border-b border-gray-700">
+                  <button
+                    className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
+                      activeTab === 'blockly'
+                        ? 'bg-gray-800 text-white border-b-2 border-blue-500'
+                        : 'bg-gray-900 text-gray-400 hover:text-gray-200'
+                    }`}
+                    id="tab-blockly"
+                    onClick={() => setActiveTab('blockly')}
+                  >
+                    Blockly
+                  </button>
+                  <button
+                    className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
+                      activeTab === 'monaco'
+                        ? 'bg-gray-800 text-white border-b-2 border-blue-500'
+                        : 'bg-gray-900 text-gray-400 hover:text-gray-200'
+                    }`}
+                    id="tab-monaco"
+                    onClick={() => setActiveTab('monaco')}
+                  >
+                    Python
+                  </button>
+                  <div className="flex items-center gap-1 px-2 border-l border-gray-700">
+                    {simStatus === 'running' ? (
+                      <button onClick={simStop} className="run-btn run-btn-stop">⏹</button>
+                    ) : simStatus === 'finished' || simStatus === 'error' ? (
+                      <button onClick={simReset} className="run-btn run-btn-reset">↺</button>
+                    ) : (
+                      <button onClick={simStart} className="run-btn run-btn-start">▶</button>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1 min-h-0 flex flex-col">
-                <div className="flex-1 min-h-0" style={{ display: activeTab === 'blockly' ? 'flex' : 'none', flexDirection: 'column' }}>
-                  <BlocklyEditor />
+                <div className="flex-1 min-h-0 flex flex-col">
+                  <div className="flex-1 min-h-0" style={{ display: activeTab === 'blockly' ? 'flex' : 'none', flexDirection: 'column' }}>
+                    <BlocklyEditor />
+                  </div>
+                  <div className="flex-1 min-h-0" style={{ display: activeTab === 'monaco' ? 'flex' : 'none' }}>
+                    <MonacoEditor />
+                  </div>
                 </div>
-                <div className="flex-1 min-h-0" style={{ display: activeTab === 'monaco' ? 'flex' : 'none' }}>
-                  <MonacoEditor />
+                <div className="h-32 flex-shrink-0">
+                  <ConsolePanel />
                 </div>
+              </aside>
+            )}
+            {(!isMobile || simView === 'sensor') && (
+              <div className="sensor-column">
+                <SensorPanel />
+                <MotorPanel />
               </div>
-              <div className="h-32 flex-shrink-0">
-                <ConsolePanel />
-              </div>
-            </aside>
-            <SensorPanel />
+            )}
             <main className="canvas-panel">
               <div className="canvas-toolbar">
                 <StatusBar />
@@ -268,7 +338,7 @@ function App() {
               </div>
               <div ref={containerRef} className="pixi-container" />
             </main>
-            <ReplayPlayer />
+            {(!isMobile || simView === 'replay') && <ReplayPlayer />}
           </div>
         </div>
         <div className={`tab-panel ${appTab === 'maze' ? 'active' : ''}`}>

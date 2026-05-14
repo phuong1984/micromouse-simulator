@@ -25,6 +25,7 @@ let micropython: MicroPythonModule | null = null;
 let logBuffer: string[] = [];
 let replayPath: PathPoint[] = [];
 let isAgainstWall = false;
+const userSetWheels = new Set<string>();
 
 interface PendingMove {
   type: 'distance' | 'angle';
@@ -144,6 +145,8 @@ function tick() {
     logBuffer = [];
   }
 
+  const motorRPMs = robotSpec.wheels.map(w => robotPhysics!.motorSpeeds.get(w.id) ?? 0);
+
   postToMain({
     type: 'STATE_UPDATE',
     payload: {
@@ -151,7 +154,7 @@ function tick() {
         tick: tickCount++,
         robot: state,
         sensors: sensorReadings,
-        motorRPMs: [0, 0],
+        motorRPMs,
         isFinished: false,
         elapsedMs,
         status: 'running',
@@ -191,8 +194,12 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
           targetDistance: distance,
           resolve,
         });
-        const rpm = wheelMaxRPM();
-        robotPhysics!.motorSpeeds.forEach((_, key) => robotPhysics!.motorSpeeds.set(key, rpm));
+        robotPhysics!.motorSpeeds.forEach((_, key) => {
+          if (!userSetWheels.has(key)) {
+            const wheel = robotSpec!.wheels.find(w => w.id === key);
+            if (wheel) robotPhysics!.motorSpeeds.set(key, wheel.maxRPM);
+          }
+        });
       });
     },
 
@@ -225,8 +232,11 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
 
     set_wheel_speed: (wheelId: string, rpm: number) => {
       if (!robotPhysics || !robotSpec) return;
-      if (robotSpec.wheels.some(w => w.id === wheelId)) {
-        robotPhysics.motorSpeeds.set(wheelId, rpm);
+      const wheel = robotSpec.wheels.find(w => w.id === wheelId);
+      if (wheel) {
+        const clamped = Math.sign(rpm) * Math.min(Math.abs(rpm), wheel.maxRPM);
+        robotPhysics.motorSpeeds.set(wheelId, clamped);
+        userSetWheels.add(wheelId);
       }
     },
 
@@ -341,6 +351,7 @@ function resetPhysics() {
   isRunning = false;
   isFinished = false;
   isAgainstWall = false;
+  userSetWheels.clear();
   tickCount = 0;
   pendingMoves = [];
 }
@@ -401,9 +412,14 @@ async function handleStart(payload: { robotSpec: RobotSpec; mazeGrid: MazeGrid; 
     await initMicroPython();
     await runUserCode(payload.pythonCode);
 
-    // Wait for any remaining pending moves (safety net for sync fallback)
+    // Keep running while there are pending moves
     while (pendingMoves.length > 0 && isRunning && !isFinished) {
       await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
+    // Brief extra runtime for braking/coasting after code finishes
+    if (isRunning && !isFinished) {
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
 
     if (isRunning && !isFinished) {
@@ -426,6 +442,7 @@ async function handleStart(payload: { robotSpec: RobotSpec; mazeGrid: MazeGrid; 
 function handleStop() {
   isRunning = false;
   pendingMoves = [];
+  userSetWheels.clear();
 }
 
 function handleReset() {

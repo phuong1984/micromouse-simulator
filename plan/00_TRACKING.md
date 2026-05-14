@@ -258,3 +258,26 @@
 - **Files modified**: `src/workers/simulation.worker.ts`
 - **Verify**: `npm run build` ✅, `npm run lint` ✅
 - **Phase 9 sẵn sàng**: Polish & Education (tasks 9.1–9.8)
+
+### 2026-05-14 (Session 15) — Phase 9: Responsive Layout + Keyboard Shortcuts
+- **9.5 Responsive Layout**: Added `useMediaQuery()` hook, `simView` state (`code|sensor|replay`), mobile sub-tab bar (`mobile-tabs`). Panels conditionally render based on screen width (>1024px all visible, <=1024px only selected panel shows via `isMobile` check). CSS `@media (max-width: 1024px)` flips `simulation-layout` to `flex-column`, panels full-width with bounded height. MazeEditor already uses PixiJS pointer events → touch works natively.
+- **9.7 Keyboard Shortcuts**: Global keydown handler in App.tsx — Space (run/stop), R (reset), S (stop), Ctrl+Z (undo maze), Ctrl+Y (redo maze), F11 (fullscreen). Ignored when focus in INPUT/TEXTAREA/SELECT or `.monaco-editor`/`.blocklySvg`.
+- **New files**: `src/shared/utils/media-query.ts` — `useMediaQuery()` hook.
+- **Files modified**: `src/app/App.tsx` (simView, keyboard shortcuts, conditional panel rendering), `src/app/App.css` (mobile-tabs, @media breakpoint).
+- **Verify**: `npm run build` ✅, `npm run lint` ✅
+
+### 2026-05-14 (Session 16) — Phase 8.3 Motor RPM + Bug Fixes + Phase 9 Polish
+- **Sensor Panel fixes**:
+  - Changed header text "Cảm biến" → "Sensor reading"
+  - Fixed bar colors: gray (-1 out of scope), red (≤30% range), orange (31-60%), green (>60%)
+  - Progress bar now uses percentage of maxRange, not absolute mm
+- **set_wheel_speed fixes**:
+  - Added clamping: `Math.sign(rpm) * Math.min(|rpm|, maxRPM)` — prevents values > maxRPM or < -maxRPM
+  - Added `userSetWheels` tracking: `move()` only sets default speed for wheels NOT explicitly set via `set_wheel_speed()`. `set_wheel_speed(wheel, 0)` is treated as explicit user command — move() leaves it at 0.
+  - Removed `hasActiveMotorSpeeds()` keepalive (caused simulation stop when both wheels set to 0). Replaced with 200ms minimum runtime after user code finishes for braking/coasting.
+  - Fixed per-wheel maxRPM: `move()` now sets each wheel to its own `maxRPM` from spec (not `Math.min` of all). Previously if left=400, right=500, both got 400.
+- **8.3 MotorPanel**: New component showing RPM per wheel with color-coded progress bar (same pattern as sensor). Data sourced from `robotPhysics.motorSpeeds` via `motorRPMs` in SimState (was hardcoded `[0,0]`). Placed below SensorPanel in the same `sensor-column`.
+- **CSS polish**: Added `--accent-blue: #60a5fa` CSS variable in `:root`, used for all panel headers (SENSOR READING, MOTOR RPM, REPLAY) and tab active states.
+- **New files**: `src/modules/telemetry/MotorPanel.tsx`
+- **Files modified**: `src/workers/simulation.worker.ts`, `src/modules/telemetry/SensorPanel.tsx`, `src/modules/telemetry/index.ts`, `src/app/App.tsx`, `src/app/App.css`, `src/modules/simulation/motorModel.ts`
+- **Verify**: `npm run build` ✅, `npm run lint` ✅
