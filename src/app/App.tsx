@@ -13,6 +13,7 @@ import { ShareDialog } from '../shared/components/ShareDialog';
 import { TutorialOverlay } from '../shared/components/TutorialOverlay';
 import { restoreFromHash } from '../shared/utils/share-url';
 import { useThemeStore } from '../shared/utils/theme-store';
+import { patchBlocklyTheme } from '../modules/code-editor/blockly-theme';
 import './App.css';
 
 type AppTab = 'config' | 'maze' | 'simulation';
@@ -53,6 +54,7 @@ function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    patchBlocklyTheme(theme);
   }, [theme]);
 
   useHintSystem(simState, simStatus, (msg) => {
@@ -322,30 +324,22 @@ function App() {
           <div className="simulation-layout">
             {(!isMobile || simView === 'code') && (
               <aside className="code-panel">
-                <div className="flex border-b border-gray-700">
+                <div className="code-tab-bar">
                   <button
-                    className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-                      activeTab === 'blockly'
-                        ? 'bg-gray-800 text-white border-b-2 border-blue-500'
-                        : 'bg-gray-900 text-gray-400 hover:text-gray-200'
-                    }`}
+                    className={`code-tab${activeTab === 'blockly' ? ' active' : ''}`}
                     id="tab-blockly"
                     onClick={() => setActiveTab('blockly')}
                   >
                     Blockly
                   </button>
                   <button
-                    className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-                      activeTab === 'monaco'
-                        ? 'bg-gray-800 text-white border-b-2 border-blue-500'
-                        : 'bg-gray-900 text-gray-400 hover:text-gray-200'
-                    }`}
+                    className={`code-tab${activeTab === 'monaco' ? ' active' : ''}`}
                     id="tab-monaco"
                     onClick={() => setActiveTab('monaco')}
                   >
                     Python
                   </button>
-                  <div className="flex items-center gap-1 px-2 border-l border-gray-700">
+                  <div className="code-tab-actions">
                     <CodeToolbar />
                     {simStatus === 'running' ? (
                       <button onClick={simStop} className="run-btn run-btn-stop">⏹</button>

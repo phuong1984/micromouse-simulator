@@ -51,7 +51,6 @@ export const MICROMOUSE_THEME = Blockly.Theme.defineTheme('micromouse', {
     procedure_category: { colour: '#9c89b8' },
   },
   componentStyles: {
-    workspaceBackgroundColour: '#1f2937',
     toolboxBackgroundColour: '#111827',
     toolboxForegroundColour: '#e5e7eb',
     flyoutBackgroundColour: '#374151',
@@ -73,3 +72,21 @@ export const MICROMOUSE_THEME = Blockly.Theme.defineTheme('micromouse', {
   },
   startHats: true,
 });
+
+export function patchBlocklyTheme(mode: 'dark' | 'light') {
+  if (mode === 'dark') {
+    MICROMOUSE_THEME.componentStyles = {
+      ...MICROMOUSE_THEME.componentStyles,
+      toolboxBackgroundColour: '#111827',
+      flyoutBackgroundColour: '#374151',
+    };
+  } else {
+    MICROMOUSE_THEME.componentStyles = {
+      ...MICROMOUSE_THEME.componentStyles,
+      toolboxBackgroundColour: '#f3f4f6',
+      flyoutBackgroundColour: '#e5e7eb',
+    };
+  }
+  const ws = Blockly.common.getMainWorkspace();
+  if (ws) (ws as Blockly.WorkspaceSvg).setTheme(MICROMOUSE_THEME);
+}

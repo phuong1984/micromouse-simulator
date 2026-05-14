@@ -63,15 +63,15 @@ await solve()`,
     code: `async def solve():
     while not robot.at_goal():
         front = robot.get_sensor('front')
-        left = robot.get_sensor('front-left')
-        right = robot.get_sensor('front-right')
+        left = robot.get_sensor('left')
+        right = robot.get_sensor('right')
 
-        if front > 150:
+        if front < 0:
             await robot.move(180)
-        elif left > 120:
+        elif left < 0:
             await robot.turn(-90)
             await robot.move(180)
-        elif right > 120:
+        elif right < 0:
             await robot.turn(90)
             await robot.move(180)
         else:
@@ -87,10 +87,10 @@ await solve()`,
     code: `async def solve():
     while not robot.at_goal():
         front = robot.get_sensor('front')
-        if front < 50:
-            await robot.turn(90)
-        else:
+        if front < 0:
             await robot.move(180)
+        else:
+            await robot.turn(90)
 
 await solve()`,
   },
@@ -103,13 +103,13 @@ await solve()`,
     robot.log("Running manual motor control...")
 
     # Move forward
-    robot.set_wheel_speed('left_wheel', 400)
-    robot.set_wheel_speed('right_wheel', 400)
+    robot.set_wheel_speed('wheel-left', 400)
+    robot.set_wheel_speed('wheel-right', 400)
     await robot.move(180)
 
     # Turn right on the spot
-    robot.set_wheel_speed('left_wheel', 300)
-    robot.set_wheel_speed('right_wheel', -300)
+    robot.set_wheel_speed('wheel-left', 300)
+    robot.set_wheel_speed('wheel-right', -300)
     await robot.turn(90)
 
     # Stop

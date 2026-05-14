@@ -11,35 +11,25 @@ export function ConsolePanel() {
   }, [consoleLogs]);
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 border-t border-gray-700">
-      <div className="flex items-center justify-between px-3 py-1 bg-gray-800 border-b border-gray-700">
-        <span className="text-xs text-gray-400 font-medium">Console</span>
-        <button
-          onClick={clearLogs}
-          className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
-        >
-          Clear
-        </button>
+    <div className="console-panel">
+      <div className="console-header">
+        <span className="console-header-label">Console</span>
+        <button onClick={clearLogs} className="console-header-clear">Clear</button>
       </div>
-      <div className="flex-1 overflow-y-auto p-2 font-mono text-xs space-y-1">
+      <div className="console-body">
         {consoleLogs.length === 0 && (
-          <div className="text-gray-600 italic">No output yet</div>
+          <div className="console-empty">No output yet</div>
         )}
         {consoleLogs.map((entry, i) => (
-          <div
-            key={i}
-            className={`${
+          <div key={i} className="console-entry">
+            <span className="console-timestamp">[{entry.timestamp.toString().slice(-5)}]</span>
+            <span className={
               entry.type === 'error'
-                ? 'text-red-400'
+                ? 'console-entry-error'
                 : entry.type === 'warn'
-                  ? 'text-yellow-400'
-                  : 'text-green-400'
-            }`}
-          >
-            <span className="text-gray-600 mr-1">
-              [{entry.timestamp.toString().slice(-5)}]
-            </span>
-            {entry.message}
+                  ? 'console-entry-warn'
+                  : 'console-entry-log'
+            }>{entry.message}</span>
           </div>
         ))}
         <div ref={bottomRef} />
