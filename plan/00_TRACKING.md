@@ -14,12 +14,12 @@
 | 3 | MicroPython Execution Engine | 9 | 10h | ✅ Hoàn |
 | 4 | Physics & Simulation Loop | 8 | 8h | ✅ Hoàn |
 | 5 | Sensor Simulation | 8 | 8h | ✅ Hoàn |
-| 5.5 | Integration | 4 | 3h | ⬜ Chưa bắt đầu |
+| 5.5 | Integration | 4 | 3h | ✅ Hoàn |
 | 6 | Robot Config UI | 8 | 8h | ✅ Hoàn — tasks 6.1–6.8 done |
 | 7 | Maze Editor | 10 | 11.5h | ✅ Hoàn — tasks 7.1–7.10 + polish + refactoring + grid lines |
 | 8 | Telemetry & Replay | 10 | 9h | ✅ Hoàn — tasks 8.1–8.10 (8.3, 8.4 removed per user) |
-| 9 | Polish & Education | 8 | 11h | ⬜ Chưa bắt đầu |
-| **TỔNG** | | **84** | **~98.5h** | |
+| 9 | Polish & Education | 8 | 11h | ✅ Hoàn — tasks 9.1–9.8 |
+| **TỔNG** | | **84** | **~98.5h** | ✅ All 9 phases complete |
 
 ---
 
@@ -33,7 +33,7 @@
 | 4 | 4 | Physics engine + Matter.js tick loop + robot moves | ✅ |
 | 5 | 5 + 5.5 | Sensors + integration test | ✅ |
 | 6 | 6 + 7 | Config + Maze editor | ✅ Sprint 6 |
-| 7 | 8 + 9 | Telemetry + Polish | 🔄 Sprint 7 |
+| 7 | 8 + 9 | Telemetry + Polish | ✅ Hoàn |
 
 ---
 
@@ -265,6 +265,18 @@
 - **New files**: `src/shared/utils/media-query.ts` — `useMediaQuery()` hook.
 - **Files modified**: `src/app/App.tsx` (simView, keyboard shortcuts, conditional panel rendering), `src/app/App.css` (mobile-tabs, @media breakpoint).
 - **Verify**: `npm run build` ✅, `npm run lint` ✅
+
+### 2026-05-14 (Session 17) — Phase 9 Hoàn Tất: Theme, Flood-fill, Examples, Tutorial, Hints
+- **9.6 Theme toggle**: Zustand theme store, CSS custom properties cho tất cả colors (dark default + `[data-theme="light"]`), toggle button ☀️/🌙 trong navbar, localStorage persistence, flash-prevention inline script in index.html
+- **9.4 Flood-fill overlay**: `floodFillDistances()` BFS algorithm trong maze.ts, PIXI.Text overlay layer trong SimulationRenderer, "Flood-fill" toggle checkbox trong canvas toolbar, distance numbers trên mỗi cell
+- **9.3 Example programs**: 5 examples (Left Wall Follower, Right Wall Follower, Simple Explorer, Straight Line Test, Manual Motor Control) với dropdown 📚 trong code toolbar, auto-load vào Monaco editor
+- **9.1 Tutorial/onboarding**: `TutorialOverlay.tsx` component với 7-step stepper card, first-visit detection (localStorage), ❓ Help button trong navbar để re-trigger
+- **9.2 Hint system**: `useHintSystem` hook phát hiện stuck/spinning/wall-bang patterns từ simState history, hint toast với `#1e3a5f` background
+- **Toolbox width**: JS inline style injection sau Blockly init (`setProperty('width', '80px', 'important')`)
+- **New files**: theme-store.ts, use-hint-system.ts, examples.ts, TutorialOverlay.tsx
+- **Files modified**: App.tsx, App.css, SimulationRenderer.ts, maze.ts, BlocklyEditor.tsx, CodeToolbar.tsx, index.html, tailwind.config.ts
+- **Verify**: `npm run build` ✅, `npm run lint` ✅
+- **Phase 9 CHÍNH THỨC HOÀN TẤT**: tasks 9.1–9.8
 
 ### 2026-05-14 (Session 16) — Phase 8.3 Motor RPM + Bug Fixes + Phase 9 Polish
 - **Sensor Panel fixes**:

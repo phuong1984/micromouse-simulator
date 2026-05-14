@@ -9,12 +9,12 @@
 
 ## Completed: ✅
 
-- [ ] 9.1 — Tutorial/onboarding flow
-- [ ] 9.2 — Hint system
-- [ ] 9.3 — Example programs
-- [ ] 9.4 — Flood-fill overlay
+- [x] 9.1 — Tutorial/onboarding flow
+- [x] 9.2 — Hint system
+- [x] 9.3 — Example programs
+- [x] 9.4 — Flood-fill overlay
 - [x] 9.5 — Responsive layout
-- [ ] 9.6 — Theme toggle
+- [x] 9.6 — Theme toggle
 - [x] 9.7 — Keyboard shortcuts
 - [x] 9.8 — Share URL (encode/decode base64, QR code dialog, auto-restore on load)
 
@@ -143,14 +143,14 @@ Use URL hash fragment: `https://app.com/#<base64data>`
 
 ## Acceptance Criteria
 
-- [ ] Onboarding flow chạy lần đầu (có skip option)
-- [ ] Hint system detect stuck robot, gợi ý hữu ích
-- [ ] 3+ example programs hoạt động
-- [ ] Flood-fill overlay toggle on/off
+- [x] Onboarding flow chạy lần đầu (có skip option)
+- [x] Hint system detect stuck robot, gợi ý hữu ích
+- [x] 5 example programs hoạt động
+- [x] Flood-fill overlay toggle on/off
 - [x] App usable trên mobile (responsive)
-- [ ] Dark/light mode toggle hoạt động
+- [x] Dark/light mode toggle hoạt động
 - [x] Keyboard shortcuts hoạt động
-- [ ] Share URL encode/decode đúng, load state từ URL
+- [x] Share URL encode/decode đúng, load state từ URL
 
 ---
 

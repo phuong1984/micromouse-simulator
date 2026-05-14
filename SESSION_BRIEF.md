@@ -5,40 +5,28 @@
 ---
 
 - **Date**: 2026-05-14
-- **Current Phase**: Phase 9 — Polish & Education
+- **Current Phase**: Phase 9 — Polish & Education (HOÀN TẤT)
 - **Phase Plan**: `plan/09_PHASE_9_POLISH.md`
-- **Current Tasks**: 9.1–9.8
+- **Status**: ✅ All phases 0–9 complete
 
 ## Last Session Recap
 
-**Session 16 — Phase 8.3 Motor RPM + set_wheel_speed fixes + Phase 9 Polish**
+**Session 17 — Phase 9 Hoàn Tất**
 
-**What was done:**
-- Sensor panel: "Cảm biến" → "Sensor reading", fixed bar colors (≤30% range=red, 31-60%=orange, >60%=green)
-- `set_wheel_speed` clamping to `[-maxRPM, maxRPM]`
-- `userSetWheels` tracking: `move()` only sets default speed for wheels NOT explicitly set. `set_wheel_speed(wheel, 0)` is respected (move doesn't override).
-- Removed `hasActiveMotorSpeeds()`, replaced with 200ms keepalive for braking
-- Fixed per-wheel maxRPM: `move()` uses each wheel's own `maxRPM`, not `Math.min` of all
-- 8.3 MotorPanel: new component in sensor-column, shows RPM per wheel with color-coded bar
-- `--accent-blue` CSS variable for all headers
-- MazeEditor touch drag-wall — works natively via PixiJS pointer events
-- Build ✅, lint ✅
+**What was done (remaining Phase 9 tasks):**
+- **9.6 Theme toggle**: CSS custom properties + light theme + toggle button + localStorage
+- **9.4 Flood-fill overlay**: BFS distances + PIXI.Text overlay + toggle checkbox
+- **9.3 Example programs**: 5 examples (dropdown 📚 + auto-load into Monaco)
+- **9.1 Tutorial/onboarding**: 7-step stepper + first-visit + Help ❓ button
+- **9.2 Hint system**: useHintSystem hook (stuck/spinning/wall-bang) + hint toast
+- **Toolbox width fix**: Blockly post-init inline style injection
 
-**State hiện tại:**
-- 9.5 Responsive layout ✅
-- 9.7 Keyboard shortcuts ✅
+**New files**: theme-store.ts, use-hint-system.ts, examples.ts, TutorialOverlay.tsx
+**Verify**: `npm run build` ✅, `npm run lint` ✅
 
 ## Remaining
 
-| Task | Mô tả | Ước tính |
-|------|-------|----------|
-| 9.1 | Tutorial/onboarding flow | 2h |
-| 9.2 | Hint system | 1.5h |
-| 9.3 | Example programs | 1.5h |
-| 9.4 | Flood-fill overlay | 1.5h |
-| 9.6 | Theme toggle | 1h |
-| 9.8 | Share URL | 1.5h |
-
-## Blockers
-
-- None
+All phases complete. Potential next steps:
+- Final polish / bug fixes
+- Performance optimization
+- Deployment setup

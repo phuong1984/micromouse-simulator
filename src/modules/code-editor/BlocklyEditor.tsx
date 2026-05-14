@@ -4,6 +4,7 @@ import 'blockly/blocks';
 import { pythonGenerator } from 'blockly/python';
 import { registerRobotBlocks } from './robotBlocks';
 import { ROBOT_TOOLBOX } from './toolbox';
+import { MICROMOUSE_THEME } from './blockly-theme';
 import { useCodeEditorStore } from './store';
 
 const STORAGE_KEY = 'blockly-workspace-micromouse';
@@ -56,7 +57,9 @@ export function BlocklyEditor() {
 
     workspaceRef.current = Blockly.inject(container, {
       toolbox: ROBOT_TOOLBOX,
-      grid: { spacing: 20, length: 3, colour: '#ccc', snap: false }, // Turn off grid snap
+      theme: MICROMOUSE_THEME,
+      renderer: 'zelos',
+      grid: { spacing: 24, length: 2, colour: '#374151', snap: false },
       zoom: { controls: true, wheel: true, startScale: 1.0, maxScale: 3, minScale: 0.3 },
       trashcan: true,
       scrollbars: true,
@@ -82,10 +85,16 @@ export function BlocklyEditor() {
     // Initial sync
     syncWorkspace();
 
-    // Delay initial resize to ensure Flexbox is fully rendered, which fixes SVG hitbox coordinates
+    // Force toolbox width after Blockly fully lays out
     setTimeout(() => {
+      const toolboxDiv = document.querySelector('.blocklyToolboxDiv') as HTMLElement | null;
+      if (toolboxDiv) {
+        toolboxDiv.style.setProperty('width', '60px', 'important');
+        toolboxDiv.style.setProperty('min-width', '60px', 'important');
+        toolboxDiv.style.setProperty('max-width', '60px', 'important');
+      }
       if (workspaceRef.current) Blockly.svgResize(workspaceRef.current);
-    }, 100);
+    }, 300);
 
     const observer = new ResizeObserver(() => {
       if (workspaceRef.current) Blockly.svgResize(workspaceRef.current);

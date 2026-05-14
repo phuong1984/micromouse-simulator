@@ -121,6 +121,40 @@ export function cloneCells(cells: number[][]): number[][] {
   return cells.map(r => [...r]);
 }
 
+/**
+ * Flood-fill distance from goal. BFS from goal cell, each open neighbor = distance + 1.
+ * Returns a 2D array where cells[row][col] = distance, -1 if unreachable.
+ */
+export function floodFillDistances(
+  grid: MazeGrid,
+  goal: { row: number; col: number }
+): number[][] {
+  const dist: number[][] = Array.from({ length: grid.rows }, () => Array(grid.cols).fill(-1));
+  const queue: { row: number; col: number }[] = [];
+  dist[goal.row][goal.col] = 0;
+  queue.push(goal);
+  const dirs = [
+    { dr: -1, dc: 0, wall: WALL.NORTH },
+    { dr: 1, dc: 0, wall: WALL.SOUTH },
+    { dr: 0, dc: 1, wall: WALL.EAST },
+    { dr: 0, dc: -1, wall: WALL.WEST },
+  ];
+  let head = 0;
+  while (head < queue.length) {
+    const cur = queue[head++];
+    const nd = dist[cur.row][cur.col] + 1;
+    for (const d of dirs) {
+      const nr = cur.row + d.dr;
+      const nc = cur.col + d.dc;
+      if (nr >= 0 && nr < grid.rows && nc >= 0 && nc < grid.cols && dist[nr][nc] === -1 && !hasWall(grid, cur.row, cur.col, d.wall)) {
+        dist[nr][nc] = nd;
+        queue.push({ row: nr, col: nc });
+      }
+    }
+  }
+  return dist;
+}
+
 export function isReachable(
   grid: MazeGrid,
   start: { row: number; col: number },

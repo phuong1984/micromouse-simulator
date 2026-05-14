@@ -8,8 +8,11 @@ import { ConsolePanel, StatusBar, SensorPanel, MotorPanel, ReplayPlayer, useTele
 import { RobotConfig, RobotPreview, useRobotConfigStore } from '../modules/robot-config';
 import { MazeEditor, useMazeStore } from '../modules/maze';
 import { useMediaQuery } from '../shared/utils/media-query';
+import { useHintSystem } from '../shared/utils/use-hint-system';
 import { ShareDialog } from '../shared/components/ShareDialog';
+import { TutorialOverlay } from '../shared/components/TutorialOverlay';
 import { restoreFromHash } from '../shared/utils/share-url';
+import { useThemeStore } from '../shared/utils/theme-store';
 import './App.css';
 
 type AppTab = 'config' | 'maze' | 'simulation';
@@ -32,6 +35,7 @@ function App() {
   const sensors = useRobotConfigStore((s) => s.spec.sensors);
   const wheels = useRobotConfigStore((s) => s.spec.wheels);
   const [showSensorRays, setShowSensorRays] = useState(false);
+  const [showCellNumbers, setShowCellNumbers] = useState(false);
   const [simView, setSimView] = useState<'code' | 'sensor' | 'replay'>('code');
   const isMobile = useMediaQuery('(max-width: 1024px)');
   const prevStatusRef = useRef(simStatus);
@@ -39,7 +43,22 @@ function App() {
   const mazeUndo = useMazeStore((s) => s.undo);
   const mazeRedo = useMazeStore((s) => s.redo);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(() => {
+    return localStorage.getItem('micromouse-tutorial-done') !== 'true';
+  });
   const [toast, setToast] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
+  const theme = useThemeStore((s) => s.theme);
+  const toggleTheme = useThemeStore((s) => s.toggle);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  useHintSystem(simState, simStatus, (msg) => {
+    setHint(msg);
+    setTimeout(() => setHint(null), 8000);
+  });
 
   useEffect(() => {
     if (restoreFromHash()) {
@@ -112,7 +131,7 @@ function App() {
           status: 'idle',
         },
         robotSpec,
-        { showSensorRays: false, showPathTrail: false, showCellNumbers: false }
+        { showSensorRays, showPathTrail: false, showCellNumbers }
       );
     });
 
@@ -135,10 +154,10 @@ function App() {
       renderer.updateFrame(
         renderState,
         robotSpec,
-        { showSensorRays, showPathTrail: false, showCellNumbers: false }
+        { showSensorRays, showPathTrail: false, showCellNumbers }
       );
     }
-  }, [renderState, showSensorRays, robotSpec]);
+  }, [renderState, showSensorRays, showCellNumbers, robotSpec]);
 
   useEffect(() => {
     const renderer = rendererRef.current;
@@ -155,9 +174,9 @@ function App() {
         status: 'idle',
       },
       robotSpec,
-      { showSensorRays, showPathTrail: false, showCellNumbers: false }
+      { showSensorRays, showPathTrail: false, showCellNumbers }
     );
-  }, [robotSpec, simState, showSensorRays, mazeGrid]);
+  }, [robotSpec, simState, showSensorRays, showCellNumbers, mazeGrid]);
 
   useEffect(() => {
     const renderer = rendererRef.current;
@@ -175,9 +194,9 @@ function App() {
         status: 'idle',
       },
       robotSpec,
-      { showSensorRays, showPathTrail: false, showCellNumbers: false }
+      { showSensorRays, showPathTrail: false, showCellNumbers }
     );
-  }, [mazeGrid, robotSpec, showSensorRays]);
+  }, [mazeGrid, robotSpec, showSensorRays, showCellNumbers]);
 
   useEffect(() => {
     const handleShortcuts = (e: KeyboardEvent) => {
@@ -275,6 +294,20 @@ function App() {
         >
           🔗 Share
         </button>
+        <button
+          className="share-tab-btn"
+          onClick={() => setShowTutorial(true)}
+          title="Help / Tutorial"
+        >
+          ❓
+        </button>
+        <button
+          className="share-tab-btn"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
       </nav>
 
       <div className="app-content">
@@ -346,14 +379,22 @@ function App() {
               <div className="canvas-toolbar">
                 <StatusBar />
                 <div className="canvas-toolbar-right">
-                  <label className="sensor-toggle">
-                    <input
-                      type="checkbox"
-                      checked={showSensorRays}
-                      onChange={(e) => setShowSensorRays(e.target.checked)}
-                    />
-                    Show sensor rays
-                  </label>
+                    <label className="sensor-toggle">
+                      <input
+                        type="checkbox"
+                        checked={showSensorRays}
+                        onChange={(e) => setShowSensorRays(e.target.checked)}
+                      />
+                      Rays
+                    </label>
+                    <label className="sensor-toggle">
+                      <input
+                        type="checkbox"
+                        checked={showCellNumbers}
+                        onChange={(e) => setShowCellNumbers(e.target.checked)}
+                      />
+                      Flood-fill
+                    </label>
                 </div>
               </div>
               <div ref={containerRef} className="pixi-container" />
@@ -373,7 +414,9 @@ function App() {
       </div>
 
       {showShareDialog && <ShareDialog onClose={() => setShowShareDialog(false)} />}
+      {showTutorial && <TutorialOverlay onClose={() => setShowTutorial(false)} />}
       {toast && <div className="toast">{toast}</div>}
+      {hint && <div className="toast toast-hint">{hint}</div>}
     </div>
   );
 }

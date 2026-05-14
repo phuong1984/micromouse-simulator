@@ -39,7 +39,7 @@ export function registerRobotBlocks(): void {
       this.setInputsInline(true);
       this.setPreviousStatement(true);
       this.setNextStatement(true);
-      this.setColour(230);
+      this.setStyle('robot_movement');
       this.setTooltip('Move forward a specific distance (mm)');
     }
   };
@@ -57,7 +57,7 @@ export function registerRobotBlocks(): void {
       this.setInputsInline(true);
       this.setPreviousStatement(true);
       this.setNextStatement(true);
-      this.setColour(230);
+      this.setStyle('robot_movement');
       this.setTooltip('Turn robot in place');
     }
   };
@@ -69,7 +69,7 @@ export function registerRobotBlocks(): void {
       this.setInputsInline(true);
       this.setPreviousStatement(true);
       this.setNextStatement(true);
-      this.setColour(230);
+      this.setStyle('robot_movement');
       this.setTooltip('Stop robot');
     }
   };
@@ -87,7 +87,7 @@ export function registerRobotBlocks(): void {
       this.setInputsInline(true);
       this.setPreviousStatement(true);
       this.setNextStatement(true);
-      this.setColour(30);
+      this.setStyle('robot_wheel');
       this.setTooltip('Set speed of a specific wheel');
     }
   };
@@ -98,7 +98,7 @@ export function registerRobotBlocks(): void {
           .appendField('Get Distance [mm] from')
           .appendField(new Blockly.FieldDropdown(() => _sensorOptions.items), 'SENSOR_ID');
       this.setOutput(true, 'Number');
-      this.setColour(210);
+      this.setStyle('robot_sensor');
       this.setTooltip('Get distance from sensor (mm), -1 if none');
     }
   };
@@ -112,8 +112,20 @@ export function registerRobotBlocks(): void {
           .appendField(new Blockly.FieldNumber(100, 10, 500), 'THRESHOLD')
           .appendField('mm');
       this.setOutput(true, 'Boolean');
-      this.setColour(210);
+      this.setStyle('robot_sensor');
       this.setTooltip('Check if wall is detected');
+    }
+  };
+
+  Blockly.Blocks['robot_log'] = {
+    init: function() {
+      this.appendValueInput('VALUE')
+          .appendField('Print');
+      this.setInputsInline(true);
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setStyle('robot_sensor');
+      this.setTooltip('Print a value to the console');
     }
   };
 
@@ -122,7 +134,7 @@ export function registerRobotBlocks(): void {
       this.appendDummyInput()
           .appendField('At Goal?');
       this.setOutput(true, 'Boolean');
-      this.setColour(210);
+      this.setStyle('robot_sensor');
       this.setTooltip('Check if robot has reached the goal');
     }
   };
@@ -160,6 +172,11 @@ export function registerRobotBlocks(): void {
     const dir = block.getFieldValue('DIRECTION') as string;
     const threshold = block.getFieldValue('THRESHOLD') as number;
     return [`(0 < robot.get_sensor('${dir}') < ${threshold})`, Order.ATOMIC];
+  };
+
+  pythonGenerator.forBlock['robot_log'] = function (block: Blockly.Block) {
+    const value = pythonGenerator.valueToCode(block, 'VALUE', Order.ATOMIC) || "''";
+    return `robot.log(${value})\n`;
   };
 
   pythonGenerator.forBlock['robot_at_goal'] = function (_block: Blockly.Block) {

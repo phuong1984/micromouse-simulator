@@ -6,7 +6,7 @@ export const ROBOT_TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     {
       kind: 'category',
       name: '🤖 Movement',
-      colour: '120',
+      categorystyle: 'movement_category',
       contents: [
         {
           kind: 'block',
@@ -39,17 +39,18 @@ export const ROBOT_TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     {
       kind: 'category',
       name: '📡 Sensors',
-      colour: '210',
+      categorystyle: 'sensor_category',
       contents: [
         { kind: 'block', type: 'robot_get_sensor' },
         { kind: 'block', type: 'robot_wall_detected' },
         { kind: 'block', type: 'robot_at_goal' },
+        { kind: 'block', type: 'robot_log' },
       ],
     },
     {
       kind: 'category',
       name: '🔁 Loops',
-      colour: '290',
+      categorystyle: 'loop_category',
       contents: [
         { kind: 'block', type: 'controls_repeat_ext' },
         { kind: 'block', type: 'controls_whileUntil' },
@@ -59,7 +60,7 @@ export const ROBOT_TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     {
       kind: 'category',
       name: '❓ Logic',
-      colour: '60',
+      categorystyle: 'logic_category',
       contents: [
         { kind: 'block', type: 'controls_if' },
         { kind: 'block', type: 'logic_compare' },
@@ -71,7 +72,7 @@ export const ROBOT_TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     {
       kind: 'category',
       name: '🔢 Math',
-      colour: '230',
+      categorystyle: 'math_category',
       contents: [
         { kind: 'block', type: 'math_number' },
         { kind: 'block', type: 'math_arithmetic' },
@@ -79,8 +80,34 @@ export const ROBOT_TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     },
     {
       kind: 'category',
+      name: '🔤 Text',
+      categorystyle: 'text_category',
+      contents: [
+        { kind: 'block', type: 'text' },
+        { kind: 'block', type: 'text_join' },
+        { kind: 'block', type: 'text_append' },
+        { kind: 'block', type: 'text_length' },
+        { kind: 'block', type: 'text_isEmpty' },
+        { kind: 'block', type: 'text_reverse' },
+        { kind: 'block', type: 'text_trim' },
+        { kind: 'block', type: 'text_changeCase' },
+        { kind: 'block', type: 'text_count' },
+        { kind: 'block', type: 'text_replace' },
+        { kind: 'block', type: 'text_indexOf' },
+        { kind: 'block', type: 'text_charAt' },
+        { kind: 'block', type: 'text_getSubstring' },
+      ],
+    },
+    {
+      kind: 'category',
+      name: '⚙️ Functions',
+      categorystyle: 'procedure_category',
+      custom: 'PROCEDURE',
+    },
+    {
+      kind: 'category',
       name: '📦 Variables',
-      colour: '330',
+      colour: '#9ca3af',
       custom: 'VARIABLE',
     },
   ],

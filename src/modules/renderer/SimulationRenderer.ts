@@ -6,6 +6,7 @@ import { RenderOptions } from './types';
 import { drawMazeWalls, drawMazeMarkers, drawMazeGridLines, computeMazeScale, computeMazeOffset } from '../../shared/utils/maze-render';
 import { WALL_COLOR, FLOOR_COLOR, START_COLOR, GOAL_COLOR, GRID_LINE_COLOR, BASE_CORNER_RADIUS, WHEEL_CORNER_RADIUS } from '../../shared/constants/render-colors';
 import { createPixiApp, destroyPixiApp, resizePixiRenderer } from '../../shared/utils/pixi-utils';
+import { floodFillDistances } from '../../shared/utils/maze';
 
 const BASE_COLOR = 0x1e3a5f;
 const BASE_STROKE = 0x3b82f6;
@@ -29,11 +30,15 @@ export class SimulationRenderer {
   private sensorFov!: PIXI.Graphics;
   private sensorRays!: PIXI.Graphics;
   private sceneContainer!: PIXI.Container;
+  private floodFillLayer!: PIXI.Container;
   private scale: number = 1;
   private currentGrid: MazeGrid | null = null;
   private containerRef: HTMLElement | null = null;
   private destroyed = false;
   private celebrated = false;
+  private floodFillTexts: PIXI.Text[] = [];
+  private showCellNumbers = false;
+  private prevShowCellNumbers = false;
 
   private confettiParticles: Array<{
     x: number; y: number; vx: number; vy: number;
@@ -55,7 +60,11 @@ export class SimulationRenderer {
     this.robotLayer = new PIXI.Container();
     this.overlayLayer = new PIXI.Container();
 
+    this.floodFillLayer = new PIXI.Container();
+    this.floodFillLayer.visible = false;
+
     this.sceneContainer.addChild(this.mazeLayer);
+    this.sceneContainer.addChild(this.floodFillLayer);
     this.sceneContainer.addChild(this.robotLayer);
     this.sceneContainer.addChild(this.overlayLayer);
     app.stage.addChild(this.sceneContainer);
@@ -101,6 +110,44 @@ export class SimulationRenderer {
     const off = computeMazeOffset(this.app!.screen.width, this.app!.screen.height, totalW, totalH, wt);
     this.sceneContainer.x = off.x;
     this.sceneContainer.y = off.y;
+
+    this.rebuildFloodFill();
+  }
+
+  private rebuildFloodFill(): void {
+    this.floodFillLayer.removeChildren();
+    this.floodFillTexts = [];
+    if (!this.currentGrid) return;
+
+    const dist = floodFillDistances(this.currentGrid, this.currentGrid.goal);
+    const s = this.scale;
+    const cs = this.currentGrid.cellSize * s;
+    const halfCs = cs / 2;
+
+    for (let r = 0; r < this.currentGrid.rows; r++) {
+      for (let c = 0; c < this.currentGrid.cols; c++) {
+        const d = dist[r][c];
+        if (d < 0) continue;
+
+        const text = new PIXI.Text({
+          text: String(d),
+          style: {
+            fontSize: Math.max(cs * 0.35, 10),
+            fill: d === 0 ? 0xef4444 : 0x1f2937,
+            fontFamily: 'monospace',
+            fontWeight: 'bold',
+            align: 'center',
+            stroke: { color: d === 0 ? 0xffffff : 0xffffff, width: 2 },
+          },
+        });
+        text.anchor.set(0.5);
+        text.x = c * cs + halfCs;
+        text.y = r * cs + halfCs;
+        text.alpha = 0.85;
+        this.floodFillTexts.push(text);
+        this.floodFillLayer.addChild(text);
+      }
+    }
   }
 
   celebrate(): void {
@@ -184,6 +231,15 @@ export class SimulationRenderer {
 
     if (!state.isFinished) {
       this.celebrated = false;
+    }
+
+    this.showCellNumbers = options.showCellNumbers;
+    if (this.showCellNumbers !== this.prevShowCellNumbers) {
+      this.prevShowCellNumbers = this.showCellNumbers;
+      this.floodFillLayer.visible = this.showCellNumbers;
+      if (this.showCellNumbers) {
+        this.rebuildFloodFill();
+      }
     }
 
     this.robotBody.clear();
@@ -321,6 +377,8 @@ export class SimulationRenderer {
     this.sensorRays.clear();
     this.cleanupConfetti();
     this.overlayLayer.removeChildren();
+    this.floodFillLayer.removeChildren();
+    this.floodFillTexts = [];
   }
 
   destroy(): void {
