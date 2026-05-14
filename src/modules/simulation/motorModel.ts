@@ -42,7 +42,7 @@ export function applyMotorForces(
 
     const velError = targetPerTick - currentPerTick;
 
-    const Kp = 0.3;
+    const Kp = 3.0;
     const pdForce = Kp * velError * body.mass / dtSq;
 
     const effectiveTorque = wheel.maxTorque * wheel.gearRatio;

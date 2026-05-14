@@ -89,8 +89,17 @@ function checkPendingMoves() {
       }
     } else if (move.type === 'angle') {
       const diff = normalizeAngle(body.angle - move.startAngle!);
-      if (Math.abs(diff) >= Math.abs(move.targetAngleDiff!) - 0.02) {
+      const remaining = Math.abs(move.targetAngleDiff!) - Math.abs(diff);
+      if (remaining > 0 && remaining < 0.15) {
+        const factor = remaining / 0.15;
+        const entries = Array.from(robotPhysics!.motorSpeeds.entries());
+        for (const [id, speed] of entries) {
+          robotPhysics!.motorSpeeds.set(id, speed * factor);
+        }
+      }
+      if (Math.abs(diff) >= Math.abs(move.targetAngleDiff!) - 0.05) {
         robotPhysics!.motorSpeeds.forEach((_, key) => robotPhysics!.motorSpeeds.set(key, 0));
+        Matter.Body.setAngle(body, move.startAngle! + move.targetAngleDiff!);
         Matter.Body.setAngularVelocity(body, 0);
         move.resolve();
         return false;

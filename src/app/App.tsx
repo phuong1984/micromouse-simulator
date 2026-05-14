@@ -257,8 +257,6 @@ function App() {
       if (finishReason === 'goal') {
         playSound('/finished.mp3');
         rendererRef.current?.celebrate();
-      } else {
-        playSound('/no.mp3');
       }
     }
     if (simStatus === 'error' && prev !== 'error') {

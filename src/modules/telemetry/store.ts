@@ -58,8 +58,8 @@ export const useTelemetryStore = create<TelemetryState>((set) => ({
   setReplayRecording: (recording) =>
     set({
       replayRecording: recording,
-      replayIndex: recording.length > 0 ? 0 : -1,
-      replayState: recording.length > 0 ? pointToState(recording[0]) : null,
+      replayIndex: recording.length > 0 ? recording.length - 1 : -1,
+      replayState: recording.length > 0 ? pointToState(recording[recording.length - 1]) : null,
     }),
 
   setReplayIndex: (idx) =>
