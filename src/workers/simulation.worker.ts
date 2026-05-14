@@ -224,7 +224,7 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
           resolve,
         });
         const rpm = wheelMaxRPM();
-        const speed = angle > 0 ? rpm : -rpm;
+        const speed = angle > 0 ? rpm * 5 : -rpm * 5;
         const wheelIds = robotSpec!.wheels.map(w => w.id);
         if (wheelIds.length >= 2) {
           robotPhysics!.motorSpeeds.set(wheelIds[0], speed);

@@ -26,14 +26,18 @@ export function applyMotorForces(
 
   const forceDir = { x: Math.sin(angle), y: -Math.cos(angle) };
 
+  // Matter.js Body.update uses Verlet integration:
+  //   velocity = prevVel * frictionAir + (F/m) * deltaTime²
+  //   position += velocity
+  // body.velocity is displacement PER TICK (mm/frame), NOT per ms or per s
   const dtMs = dt * 1000;
   const dtSq = dtMs * dtMs;
 
   for (const wheel of spec.wheels) {
     const cmdRPM = robotState.motorSpeeds.get(wheel.id) ?? 0;
-    const clampedRPM = Math.sign(cmdRPM) * Math.min(Math.abs(cmdRPM), wheel.maxRPM);
-    const wheelRPM = clampedRPM / wheel.gearRatio;
+    const wheelRPM = cmdRPM / wheel.gearRatio;
 
+    // target in mm/s, then mm/tick to match body.velocity's Verlet units
     const circumference = 2 * Math.PI * wheel.radius;
     const targetLinearVel = (wheelRPM / 60) * circumference;
     const targetPerTick = targetLinearVel * dt;
@@ -42,12 +46,13 @@ export function applyMotorForces(
 
     const velError = targetPerTick - currentPerTick;
 
-    const Kp = 3.0;
-    const pdForce = Kp * velError * body.mass / dtSq;
+    const Kp = 0.9;
+    const frictionAir = body.frictionAir;
+    const totalForce = (Kp * velError + frictionAir * targetPerTick) * body.mass / dtSq;
 
     const effectiveTorque = wheel.maxTorque * wheel.gearRatio;
-    const maxMotorForce = effectiveTorque / wheel.radius / dtSq;
-    const clampedForce = Math.max(-maxMotorForce, Math.min(maxMotorForce, pdForce));
+    const maxMotorForce = effectiveTorque / wheel.radius / dtSq * 5;
+    const clampedForce = Math.max(-maxMotorForce, Math.min(maxMotorForce, totalForce));
 
     const wheelWorldPos = localToWorld(body, wheel.position);
 
