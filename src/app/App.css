@@ -438,15 +438,24 @@
   fill: var(--text-primary) !important;
 }
 
-.blocklyWidgetDiv .goog-menuitem {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif !important;
-  color: var(--text-primary) !important;
-  background: var(--bg-app) !important;
+.blocklyWidgetDiv .blocklyMenu,
+.blocklyDropDownDiv .blocklyMenu,
+.blocklyDropDownDiv {
+  background: var(--bg-surface) !important;
+  border-color: var(--border) !important;
 }
 
-.blocklyWidgetDiv .goog-menuitem-highlight {
-  background: var(--bg-hover) !important;
-  border-color: transparent !important;
+.blocklyMenuItem {
+  color: var(--text-primary) !important;
+  background: transparent !important;
+}
+
+.blocklyMenuItemContent {
+  color: var(--text-primary) !important;
+}
+
+.blocklyMenuItemHighlight {
+  background-color: var(--bg-hover) !important;
 }
 
 .blocklyTooltipDiv {

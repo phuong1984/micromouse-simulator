@@ -89,4 +89,31 @@ export function patchBlocklyTheme(mode: 'dark' | 'light') {
   }
   const ws = Blockly.common.getMainWorkspace();
   if (ws) (ws as Blockly.WorkspaceSvg).setTheme(MICROMOUSE_THEME);
+  patchWidgetMenuStyle(mode);
+}
+
+const WIDGET_STYLE_ID = 'micromouse-widget-override';
+
+function patchWidgetMenuStyle(mode: 'dark' | 'light') {
+  const text = mode === 'dark' ? '#e5e7eb' : '#111827';
+  const bg = mode === 'dark' ? '#1f2937' : '#ffffff';
+  const hoverBg = mode === 'dark' ? '#1f2937' : '#f3f4f6';
+  const border = mode === 'dark' ? '#374151' : '#d1d5db';
+  const css = `
+.blocklyMenuItem { color: ${text} !important; background: transparent !important; }
+.blocklyMenuItemContent { color: ${text} !important; }
+.blocklyWidgetDiv .blocklyMenu, .blocklyDropDownDiv .blocklyMenu { background: ${bg} !important; border-color: ${border} !important; }
+.blocklyDropDownDiv { background: ${bg} !important; border-color: ${border} !important; }
+.blocklyDropdownMenu { background: ${bg} !important; }
+.blocklyMenuItemHighlight { background-color: ${hoverBg} !important; }
+  `.trim();
+  let el = document.getElementById(WIDGET_STYLE_ID);
+  if (el) {
+    el.textContent = css;
+  } else {
+    el = document.createElement('style');
+    el.id = WIDGET_STYLE_ID;
+    el.textContent = css;
+    document.head.appendChild(el);
+  }
 }
