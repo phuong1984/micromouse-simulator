@@ -117,6 +117,16 @@ export function registerRobotBlocks(): void {
     }
   };
 
+  Blockly.Blocks['robot_at_goal'] = {
+    init: function() {
+      this.appendDummyInput()
+          .appendField('At Goal?');
+      this.setOutput(true, 'Boolean');
+      this.setColour(210);
+      this.setTooltip('Check if robot has reached the goal');
+    }
+  };
+
   // --- Python Generators ---
 
   pythonGenerator.forBlock['robot_move'] = function (block: Blockly.Block) {
@@ -150,5 +160,9 @@ export function registerRobotBlocks(): void {
     const dir = block.getFieldValue('DIRECTION') as string;
     const threshold = block.getFieldValue('THRESHOLD') as number;
     return [`(0 < robot.get_sensor('${dir}') < ${threshold})`, Order.ATOMIC];
+  };
+
+  pythonGenerator.forBlock['robot_at_goal'] = function (_block: Blockly.Block) {
+    return ['robot.at_goal()', Order.ATOMIC];
   };
 }

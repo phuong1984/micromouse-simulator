@@ -16,7 +16,7 @@
 - [x] 9.5 — Responsive layout
 - [ ] 9.6 — Theme toggle
 - [x] 9.7 — Keyboard shortcuts
-- [ ] 9.8 — Share URL
+- [x] 9.8 — Share URL (encode/decode base64, QR code dialog, auto-restore on load)
 
 ---
 

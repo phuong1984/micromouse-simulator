@@ -23,6 +23,8 @@ export function BlocklyEditor() {
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
   const setPythonCode = useCodeEditorStore((s) => s.setPythonCode);
   const setWorkspaceXml = useCodeEditorStore((s) => s.setWorkspaceXml);
+  const importWorkspaceXml = useCodeEditorStore((s) => s.importWorkspaceXml);
+  const clearImport = useCodeEditorStore((s) => s.clearImport);
   const activeTab = useCodeEditorStore((s) => s.activeTab);
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -114,6 +116,22 @@ export function BlocklyEditor() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  useEffect(() => {
+    const ws = workspaceRef.current;
+    const xml = importWorkspaceXml;
+    if (!ws || !xml) return;
+    try {
+      const state = JSON.parse(xml);
+      Blockly.serialization.workspaces.load(state, ws);
+      syncWorkspace();
+      clearImport();
+    } catch (e) {
+      console.warn('Failed to load imported workspace', e);
+      clearImport();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [importWorkspaceXml]);
 
   return (
     <div style={{ flex: 1, position: 'relative', width: '100%', minHeight: 0 }}>

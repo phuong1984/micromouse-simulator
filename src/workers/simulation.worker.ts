@@ -262,6 +262,10 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
       return (robotPhysics.body.angle * 180) / Math.PI;
     },
 
+    at_goal: () => {
+      return isFinished;
+    },
+
     log: (msg: string) => {
       logBuffer.push(`[log] ${msg}`);
     },

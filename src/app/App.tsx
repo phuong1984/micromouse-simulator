@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { SimulationRenderer } from '../modules/renderer';
 import { cellToWorld } from '../shared/utils/maze';
 import { playSound } from '../shared/utils/celebration-sound';
-import { BlocklyEditor, MonacoEditor, useCodeEditorStore, updateSensorDropdowns, updateWheelDropdowns } from '../modules/code-editor';
+import { BlocklyEditor, MonacoEditor, CodeToolbar, useCodeEditorStore, updateSensorDropdowns, updateWheelDropdowns } from '../modules/code-editor';
 import { useSimulationStore } from '../modules/simulation';
 import { ConsolePanel, StatusBar, SensorPanel, MotorPanel, ReplayPlayer, useTelemetryStore } from '../modules/telemetry';
 import { RobotConfig, RobotPreview, useRobotConfigStore } from '../modules/robot-config';
 import { MazeEditor, useMazeStore } from '../modules/maze';
 import { useMediaQuery } from '../shared/utils/media-query';
+import { ShareDialog } from '../shared/components/ShareDialog';
+import { restoreFromHash } from '../shared/utils/share-url';
 import './App.css';
 
 type AppTab = 'config' | 'maze' | 'simulation';
@@ -36,6 +38,15 @@ function App() {
   const mazeGrid = useMazeStore((s) => s.mazeGrid);
   const mazeUndo = useMazeStore((s) => s.undo);
   const mazeRedo = useMazeStore((s) => s.redo);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (restoreFromHash()) {
+      queueMicrotask(() => setToast('Đã load configuration từ URL'));
+      setTimeout(() => setToast(null), 4000);
+    }
+  }, []);
 
   useEffect(() => {
     updateSensorDropdowns(sensors.map(s => s.id));
@@ -256,6 +267,14 @@ function App() {
         >
           ▶ Simulation
         </button>
+        <div className="app-tabs-spacer" />
+        <button
+          className="share-tab-btn"
+          onClick={() => setShowShareDialog(true)}
+          title="Share configuration"
+        >
+          🔗 Share
+        </button>
       </nav>
 
       <div className="app-content">
@@ -294,6 +313,7 @@ function App() {
                     Python
                   </button>
                   <div className="flex items-center gap-1 px-2 border-l border-gray-700">
+                    <CodeToolbar />
                     {simStatus === 'running' ? (
                       <button onClick={simStop} className="run-btn run-btn-stop">⏹</button>
                     ) : simStatus === 'finished' || simStatus === 'error' ? (
@@ -351,6 +371,9 @@ function App() {
           </div>
         </div>
       </div>
+
+      {showShareDialog && <ShareDialog onClose={() => setShowShareDialog(false)} />}
+      {toast && <div className="toast">{toast}</div>}
     </div>
   );
 }

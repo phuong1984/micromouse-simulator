@@ -43,6 +43,7 @@ export const ROBOT_TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
       contents: [
         { kind: 'block', type: 'robot_get_sensor' },
         { kind: 'block', type: 'robot_wall_detected' },
+        { kind: 'block', type: 'robot_at_goal' },
       ],
     },
     {
