@@ -1,0 +1,143 @@
+#####################################################
+# TEST TIME
+#####################################################
+
+import time
+async def solve():
+    robot.log("=== Timing Test ===")
+    t0 = time.ticks_ms()
+    await robot.move(180)
+    t1 = time.ticks_ms()
+    move_time = time.ticks_diff(t1, t0)
+    robot.log("move(180): {} ms".format(move_time))
+    t0 = time.ticks_ms()
+    await robot.turn(90)
+    t1 = time.ticks_ms()
+    turn_time = time.ticks_diff(t1, t0)
+    robot.log("turn(90):  {} ms".format(turn_time))
+    robot.log("turn/move ratio: {:.2f}".format(turn_time / move_time))
+    robot.log("=== Done ===")
+await solve()
+
+
+
+
+#####################################################
+# FLOOD FILL ALGORITHM
+#####################################################
+import asyncio
+from collections import deque
+
+ROWS, COLS = 16, 16
+CELL_MM    = 180
+INF        = float('inf')
+
+NORTH, EAST, SOUTH, WEST = 0, 1, 2, 3
+DELTA = { NORTH: (-1,0), EAST: (0,1), SOUTH: (1,0), WEST: (0,-1) }
+
+TURN_TABLE = {
+    (NORTH,NORTH):0,  (NORTH,EAST):90,  (NORTH,SOUTH):180, (NORTH,WEST):-90,
+    (EAST,NORTH):-90, (EAST,EAST):0,    (EAST,SOUTH):90,   (EAST,WEST):180,
+    (SOUTH,NORTH):180,(SOUTH,EAST):-90, (SOUTH,SOUTH):0,   (SOUTH,WEST):90,
+    (WEST,NORTH):90,  (WEST,EAST):180,  (WEST,SOUTH):-90,  (WEST,WEST):0,
+}
+
+walls   = [[set() for _ in range(COLS)] for _ in range(ROWS)]
+dist    = [[INF]  * COLS for _ in range(ROWS)]
+pos     = [15, 0]   # [row, col] — dùng list để hàm con có thể sửa
+facing  = [NORTH]   # dùng list để hàm con có thể sửa
+GOALS   = [(7,7),(7,8),(8,7),(8,8)]
+
+def init_border_walls():
+    for c in range(COLS):
+        walls[0][c].add(NORTH)
+        walls[ROWS-1][c].add(SOUTH)
+    for r in range(ROWS):
+        walls[r][0].add(WEST)
+        walls[r][COLS-1].add(EAST)
+
+def add_wall(r, c, direction):
+    walls[r][c].add(direction)
+    dr, dc = DELTA[direction]
+    nr, nc = r+dr, c+dc
+    if 0 <= nr < ROWS and 0 <= nc < COLS:
+        walls[nr][nc].add((direction+2) % 4)
+
+def get_open_neighbors(r, c):          # ← đổi tên rõ hơn, tránh nhầm
+    result = []
+    for d, (dr, dc) in DELTA.items():
+        if d not in walls[r][c]:
+            nr, nc = r+dr, c+dc
+            if 0 <= nr < ROWS and 0 <= nc < COLS:
+                result.append((nr, nc))
+    return result
+
+def flood_fill():
+    for r in range(ROWS):
+        for c in range(COLS):
+            dist[r][c] = INF
+    q = deque([], ROWS * COLS)
+    for (gr, gc) in GOALS:
+        dist[gr][gc] = 0
+        q.append((gr, gc))
+    while q:
+        r, c = q.popleft()
+        for (nr, nc) in get_open_neighbors(r, c):   # ← gọi đúng tên
+            if dist[nr][nc] == INF:
+                dist[nr][nc] = dist[r][c] + 1
+                q.append((nr, nc))
+
+def best_direction():
+    r, c = pos
+    best_dir, best_d = None, dist[r][c]
+    for d, (dr, dc) in DELTA.items():
+        if d in walls[r][c]:
+            continue
+        nr, nc = r+dr, c+dc
+        if 0 <= nr < ROWS and 0 <= nc < COLS and dist[nr][nc] < best_d:
+            best_d, best_dir = dist[nr][nc], d
+    return best_dir
+
+def get_abs_dir(relative):
+    return (facing[0] + relative) % 4
+
+def update_walls(robot):
+    r, c = pos
+    sf = robot.get_sensor('front')
+    sr = robot.get_sensor('right')
+    sl = robot.get_sensor('left')
+    if sf != -1: add_wall(r, c, get_abs_dir(0))
+    if sr != -1: add_wall(r, c, get_abs_dir(1))
+    if sl != -1: add_wall(r, c, get_abs_dir(-1))
+
+async def turn_to(robot, target_dir):
+    angle = TURN_TABLE[(facing[0], target_dir)]
+    if angle != 0:
+        await robot.turn(angle)
+    facing[0] = target_dir
+
+async def move_forward(robot):
+    await robot.move(CELL_MM)
+    dr, dc = DELTA[facing[0]]
+    pos[0] += dr
+    pos[1] += dc
+
+async def run(robot):
+    init_border_walls()
+    flood_fill()
+
+    while tuple(pos) not in set(GOALS):
+        update_walls(robot)
+        flood_fill()
+
+        direction = best_direction()
+        if direction is None:
+            print("Không tìm được đường!")
+            return
+
+        await turn_to(robot, direction)
+        await move_forward(robot)
+
+    print(f"Đến đích tại {tuple(pos)}")
+
+await run(robot)

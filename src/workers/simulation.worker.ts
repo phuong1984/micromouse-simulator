@@ -25,6 +25,7 @@ let micropython: MicroPythonModule | null = null;
 let logBuffer: string[] = [];
 let replayPath: PathPoint[] = [];
 let isAgainstWall = false;
+let mazeGrid: MazeGrid | null = null;
 const userSetWheels = new Map<string, number>();
 
 interface PendingMove {
@@ -288,6 +289,28 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
     log: (msg: string) => {
       logBuffer.push(`[log] ${msg}`);
     },
+
+    reset_position: () => {
+      if (robotPhysics && mazeGrid) {
+        const startPos = cellToWorld(mazeGrid, mazeGrid.start.row, mazeGrid.start.col);
+        Matter.Body.setPosition(robotPhysics.body, { x: startPos.x, y: startPos.y });
+        Matter.Body.setAngle(robotPhysics.body, 0);
+        Matter.Body.setVelocity(robotPhysics.body, { x: 0, y: 0 });
+        Matter.Body.setAngularVelocity(robotPhysics.body, 0);
+        robotPhysics.motorSpeeds.forEach((_, key) => robotPhysics!.motorSpeeds.set(key, 0));
+        pendingMoves = [];
+      }
+    },
+
+    reset_timer: () => {
+      startTime = performance.now();
+      tickCount = 0;
+      replayPath = [];
+    },
+
+    sleep: (ms: number) => {
+      return new Promise<void>(resolve => setTimeout(resolve, ms));
+    },
   };
 
   mp.registerJsModule('robot', robotModule);
@@ -320,6 +343,7 @@ async function runUserCode(code: string): Promise<void> {
 
 function initPhysics(spec: RobotSpec, grid: MazeGrid) {
   robotSpec = spec;
+  mazeGrid = grid;
 
   engine = createPhysicsWorld();
 
@@ -370,6 +394,7 @@ function resetPhysics() {
   engine = null;
   robotPhysics = null;
   robotSpec = null;
+  mazeGrid = null;
   sensorSim = null;
   isRunning = false;
   isFinished = false;

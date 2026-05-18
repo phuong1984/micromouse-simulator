@@ -139,6 +139,43 @@ export function registerRobotBlocks(): void {
     }
   };
 
+  Blockly.Blocks['robot_reset_position'] = {
+    init: function() {
+      this.appendDummyInput()
+          .appendField('Reset Position');
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setStyle('robot_movement');
+      this.setTooltip('Reset robot to its starting position');
+    }
+  };
+
+  Blockly.Blocks['robot_reset_timer'] = {
+    init: function() {
+      this.appendDummyInput()
+          .appendField('Reset Timer');
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setStyle('robot_sensor');
+      this.setTooltip('Reset simulation timer to 0');
+    }
+  };
+
+  Blockly.Blocks['robot_wait'] = {
+    init: function() {
+      this.appendValueInput('MS')
+          .setCheck('Number')
+          .appendField('Wait');
+      this.appendDummyInput()
+          .appendField('ms');
+      this.setInputsInline(true);
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setStyle('robot_movement');
+      this.setTooltip('Wait for a specific duration (ms)');
+    }
+  };
+
   // --- Python Generators ---
 
   pythonGenerator.forBlock['robot_move'] = function (block: Blockly.Block) {
@@ -181,5 +218,18 @@ export function registerRobotBlocks(): void {
 
   pythonGenerator.forBlock['robot_at_goal'] = function (_block: Blockly.Block) {
     return ['robot.at_goal()', Order.ATOMIC];
+  };
+
+  pythonGenerator.forBlock['robot_reset_position'] = function (_block: Blockly.Block) {
+    return `robot.reset_position()\n`;
+  };
+
+  pythonGenerator.forBlock['robot_reset_timer'] = function (_block: Blockly.Block) {
+    return `robot.reset_timer()\n`;
+  };
+
+  pythonGenerator.forBlock['robot_wait'] = function (block: Blockly.Block) {
+    const ms = pythonGenerator.valueToCode(block, 'MS', Order.ATOMIC) || '1000';
+    return `await robot.sleep(${ms})\n`;
   };
 }

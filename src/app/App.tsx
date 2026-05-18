@@ -335,7 +335,7 @@ function App() {
                     id="tab-monaco"
                     onClick={() => setActiveTab('monaco')}
                   >
-                    Python
+                    MicroPython
                   </button>
                   <div className="code-tab-actions">
                     <CodeToolbar />
