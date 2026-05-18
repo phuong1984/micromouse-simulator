@@ -25,7 +25,7 @@ let micropython: MicroPythonModule | null = null;
 let logBuffer: string[] = [];
 let replayPath: PathPoint[] = [];
 let isAgainstWall = false;
-const userSetWheels = new Set<string>();
+const userSetWheels = new Map<string, number>();
 
 interface PendingMove {
   type: 'distance' | 'angle';
@@ -204,7 +204,9 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
           resolve,
         });
         robotPhysics!.motorSpeeds.forEach((_, key) => {
-          if (!userSetWheels.has(key)) {
+          if (userSetWheels.has(key)) {
+            robotPhysics!.motorSpeeds.set(key, userSetWheels.get(key)!);
+          } else {
             const wheel = robotSpec!.wheels.find(w => w.id === key);
             if (wheel) robotPhysics!.motorSpeeds.set(key, wheel.maxRPM);
           }
@@ -223,8 +225,16 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
           targetAngleDiff: (angle * Math.PI) / 180,
           resolve,
         });
-        const rpm = wheelMaxRPM();
-        const speed = angle > 0 ? rpm * 5 : -rpm * 5;
+        let rpm = 0;
+        if (userSetWheels.size > 0) {
+          let sum = 0;
+          userSetWheels.forEach(v => sum += Math.abs(v));
+          rpm = sum / userSetWheels.size;
+        } else {
+          rpm = wheelMaxRPM() * 5;
+        }
+
+        const speed = angle > 0 ? rpm : -rpm;
         const wheelIds = robotSpec!.wheels.map(w => w.id);
         if (wheelIds.length >= 2) {
           robotPhysics!.motorSpeeds.set(wheelIds[0], speed);
@@ -245,7 +255,7 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
       if (wheel) {
         const clamped = Math.sign(rpm) * Math.min(Math.abs(rpm), wheel.maxRPM);
         robotPhysics.motorSpeeds.set(wheelId, clamped);
-        userSetWheels.add(wheelId);
+        userSetWheels.set(wheelId, clamped);
       }
     },
 
