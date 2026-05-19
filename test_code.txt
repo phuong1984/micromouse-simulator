@@ -125,6 +125,7 @@ async def move_forward(robot):
 async def run(robot):
     init_border_walls()
     flood_fill()
+    history = []  # lưu lịch sử đường đi để backtrack
 
     while tuple(pos) not in set(GOALS):
         update_walls(robot)
@@ -132,12 +133,52 @@ async def run(robot):
 
         direction = best_direction()
         if direction is None:
-            print("Không tìm được đường!")
-            return
-
-        await turn_to(robot, direction)
-        await move_forward(robot)
+            # Backtrack: quay lại ô trước
+            if not history:
+                print("Mê cung không có đường!")
+                return
+            prev_pos = history.pop()
+            # Tính hướng quay về ô trước
+            dr = prev_pos[0] - pos[0]
+            dc = prev_pos[1] - pos[1]
+            back_dir = next(d for d,(r,c) in DELTA.items() if (r,c)==(dr,dc))
+            await turn_to(robot, back_dir)
+            await move_forward(robot)
+        else:
+            history.append(list(pos))
+            await turn_to(robot, direction)
+            await move_forward(robot)
 
     print(f"Đến đích tại {tuple(pos)}")
 
+robot.bypass_goal_detect(True)
 await run(robot)
+# ============================================================
+# BƯỚC ĐỆM: ĐƯA ROBOT VỀ VẠCH XUẤT PHÁT
+# ============================================================
+# (Trong thực tế bạn có thể code cho robot tự đi lùi về, hoặc trong mô phỏng
+# nếu web cho phép reset vị trí, hãy đặt lại tọa độ ảo về vị trí xuất phát)
+robot.reset_position()
+robot.reset_timer()
+pos     = [15, 0]   # [row, col] — dùng list để hàm con có thể sửa
+facing  = [NORTH]   # dùng list để hàm con có thể sửa
+
+# CHẠY FLOOD FILL MỘT LẦN CUỐI CÙNG ĐỂ CHỐT ĐƯỜNG ĐI NGẮN NHẤT
+flood_fill()
+robot.bypass_goal_detect(False)
+# ============================================================
+# GIAI ĐOẠN 2: FAST RUN (Chạy bứt tốc trên đường ngắn nhất)
+# ============================================================
+print("Bắt đầu chạy tốc độ cao trên đường ngắn nhất...")
+while tuple(pos) not in set(GOALS):
+    # CHÚ Ý: ĐÃ BỎ HÀM update_walls() VÀ flood_fill() Ở ĐÂY!
+    # Robot không dò đường nữa, chỉ việc "nhìn" bản đồ dist cố định để chạy.
+
+    direction = best_direction(row, col)
+    if direction is None: break
+
+    await turn_to(robot, direction)
+    await move_forward(robot) # Ở đây bạn có thể tăng tốc độ motor lên tối đa
+
+print(f"Đã bứt tốc về đích thành công tại {tuple(pos)}!")
+

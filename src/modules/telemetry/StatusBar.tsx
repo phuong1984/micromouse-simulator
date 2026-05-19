@@ -22,7 +22,8 @@ function getBestTime(mazeId: string): number | null {
 
 function getMazeId(): string {
   const grid = useMazeStore.getState().mazeGrid;
-  return `${grid.rows}x${grid.cols}-${grid.start.row}/${grid.start.col}`;
+  const goalTag = grid.goalType === 'center2x2' ? 'center' : `${grid.goal.row}/${grid.goal.col}`;
+  return `${grid.rows}x${grid.cols}-s${grid.start.row}/${grid.start.col}-g${goalTag}`;
 }
 
 export function StatusBar() {

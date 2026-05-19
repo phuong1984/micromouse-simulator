@@ -176,6 +176,18 @@ export function registerRobotBlocks(): void {
     }
   };
 
+  Blockly.Blocks['robot_bypass_goal_detect'] = {
+    init: function() {
+      this.appendDummyInput()
+          .appendField('Bypass Goal Detection')
+          .appendField(new Blockly.FieldCheckbox('TRUE'), 'ENABLE');
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setStyle('robot_sensor');
+      this.setTooltip('If enabled, reaching the goal will not stop the simulation');
+    }
+  };
+
   // --- Python Generators ---
 
   pythonGenerator.forBlock['robot_move'] = function (block: Blockly.Block) {
@@ -231,5 +243,10 @@ export function registerRobotBlocks(): void {
   pythonGenerator.forBlock['robot_wait'] = function (block: Blockly.Block) {
     const ms = pythonGenerator.valueToCode(block, 'MS', Order.ATOMIC) || '1000';
     return `await robot.sleep(${ms})\n`;
+  };
+
+  pythonGenerator.forBlock['robot_bypass_goal_detect'] = function (block: Blockly.Block) {
+    const enable = block.getFieldValue('ENABLE') === 'TRUE' ? 'True' : 'False';
+    return `robot.bypass_goal_detect(${enable})\n`;
   };
 }

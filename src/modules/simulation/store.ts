@@ -54,21 +54,26 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
         case 'FINISHED':
           set({ status: 'finished', finishReason: msg.payload.reason });
           {
-            const { logs, path, elapsedMs } = msg.payload;
+            const { logs, path, elapsedMs, reason } = msg.payload;
             const telemetry = useTelemetryStore.getState();
             for (const log of logs) {
               telemetry.appendLog(log, 'info');
             }
-            telemetry.appendLog('[sim] Finished', 'info');
+            telemetry.appendLog(`[sim] Finished (${reason})`, 'info');
             if (path.length > 0) {
               telemetry.setReplayRecording(path);
             }
-            const grid = useMazeStore.getState().mazeGrid;
-            const mazeId = `${grid.rows}x${grid.cols}-${grid.start.row}/${grid.start.col}`;
-            const key = `best-${mazeId}`;
-            const current = parseFloat(localStorage.getItem(key) ?? 'Infinity');
-            if (elapsedMs < current) {
-              localStorage.setItem(key, String(elapsedMs));
+
+            // Only record best time if robot actually reached the goal
+            if (reason === 'goal') {
+              const grid = useMazeStore.getState().mazeGrid;
+              const goalTag = grid.goalType === 'center2x2' ? 'center' : `${grid.goal.row}/${grid.goal.col}`;
+              const mazeId = `${grid.rows}x${grid.cols}-s${grid.start.row}/${grid.start.col}-g${goalTag}`;
+              const key = `best-${mazeId}`;
+              const current = parseFloat(localStorage.getItem(key) ?? 'Infinity');
+              if (elapsedMs < current) {
+                localStorage.setItem(key, String(elapsedMs));
+              }
             }
           }
           break;

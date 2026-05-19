@@ -66,6 +66,7 @@ export const ROBOT_TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
             },
           },
         },
+        { kind: 'block', type: 'robot_bypass_goal_detect' },
       ],
     },
     {

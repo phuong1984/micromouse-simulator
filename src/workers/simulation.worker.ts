@@ -26,6 +26,7 @@ let logBuffer: string[] = [];
 let replayPath: PathPoint[] = [];
 let isAgainstWall = false;
 let mazeGrid: MazeGrid | null = null;
+let bypassGoalDetect = false;
 const userSetWheels = new Map<string, number>();
 
 interface PendingMove {
@@ -306,6 +307,10 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
     sleep: (ms: number) => {
       return new Promise<void>(resolve => setTimeout(resolve, ms));
     },
+
+    bypass_goal_detect: (enable: boolean) => {
+      bypassGoalDetect = !!enable;
+    },
   };
 
   mp.registerJsModule('robot', robotModule);
@@ -354,6 +359,11 @@ function initPhysics(spec: RobotSpec, grid: MazeGrid) {
   setupGoalDetection(engine, () => {
     if (!isRunning || isFinished) return;
     logBuffer.push('[goal] detected!');
+    
+    if (bypassGoalDetect) {
+      return;
+    }
+
     isFinished = true;
     isRunning = false;
     pendingMoves = [];
@@ -394,6 +404,7 @@ function resetPhysics() {
   isRunning = false;
   isFinished = false;
   isAgainstWall = false;
+  bypassGoalDetect = false;
   userSetWheels.clear();
   tickCount = 0;
   pendingMoves = [];
