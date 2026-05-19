@@ -117,6 +117,18 @@ export const mazeToWallSegments = (grid: MazeGrid): WallSegment[] => {
   return segments;
 };
 
+export function clearInternalWalls2x2(grid: MazeGrid, row: number, col: number): void {
+  if (row < 0 || row >= grid.rows - 1 || col < 0 || col >= grid.cols - 1) return;
+  // Remove walls between (r, c) and (r, c+1)
+  removeWall(grid, row, col, WALL.EAST);
+  // Remove walls between (r+1, c) and (r+1, c+1)
+  removeWall(grid, row + 1, col, WALL.EAST);
+  // Remove walls between (r, c) and (r+1, c)
+  removeWall(grid, row, col, WALL.SOUTH);
+  // Remove walls between (r, c+1) and (r+1, c+1)
+  removeWall(grid, row, col + 1, WALL.SOUTH);
+}
+
 export function cloneCells(cells: number[][]): number[][] {
   return cells.map(r => [...r]);
 }
@@ -131,8 +143,24 @@ export function floodFillDistances(
 ): number[][] {
   const dist: number[][] = Array.from({ length: grid.rows }, () => Array(grid.cols).fill(-1));
   const queue: { row: number; col: number }[] = [];
-  dist[goal.row][goal.col] = 0;
-  queue.push(goal);
+  
+  const isCenter2x2 = grid.goalType === 'center2x2';
+  const goalCells = isCenter2x2
+    ? [
+        { row: goal.row, col: goal.col },
+        { row: goal.row, col: goal.col + 1 },
+        { row: goal.row + 1, col: goal.col },
+        { row: goal.row + 1, col: goal.col + 1 },
+      ]
+    : [{ row: goal.row, col: goal.col }];
+
+  goalCells.forEach(cell => {
+    if (cell.row >= 0 && cell.row < grid.rows && cell.col >= 0 && cell.col < grid.cols) {
+      dist[cell.row][cell.col] = 0;
+      queue.push(cell);
+    }
+  });
+
   const dirs = [
     { dr: -1, dc: 0, wall: WALL.NORTH },
     { dr: 1, dc: 0, wall: WALL.SOUTH },

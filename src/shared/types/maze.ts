@@ -20,4 +20,5 @@ export interface MazeGrid {
   cells: number[][];
   start: CellPos;
   goal: CellPos;
+  goalType?: 'manual' | 'center2x2';
 }

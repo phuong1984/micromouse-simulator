@@ -16,6 +16,7 @@ export function MazeConfigPanel({ disabled }: { disabled?: boolean }) {
   const setRows = useMazeStore((s) => s.setRows);
   const setCols = useMazeStore((s) => s.setCols);
   const setEditMode = useMazeStore((s) => s.setEditMode);
+  const setGoalType = useMazeStore((s) => s.setGoalType);
   const undo = useMazeStore((s) => s.undo);
   const redo = useMazeStore((s) => s.redo);
   const loadPreset = useMazeStore((s) => s.loadPreset);
@@ -32,6 +33,8 @@ export function MazeConfigPanel({ disabled }: { disabled?: boolean }) {
   const [selectedPresetId, setSelectedPresetId] = useState('');
   const reachInfo = storeReachable();
 
+  const canBeCenter = (mazeGrid.rows % 2 === 0) && (mazeGrid.cols % 2 === 0) && (mazeGrid.rows >= 16) && (mazeGrid.cols >= 16);
+
   const handlePresetSelect = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     setSelectedPresetId(id);
@@ -41,7 +44,8 @@ export function MazeConfigPanel({ disabled }: { disabled?: boolean }) {
       const rows = parseInt(parts[1]);
       const cols = parseInt(parts[2]);
       const diff = parts[3] as 'easy' | 'medium' | 'hard';
-      loadPreset(generateMaze(rows, cols, diff));
+      // Standardize: generateMaze will now use internal logic for start/goal based on dimensions
+      loadPreset(generateMaze(rows, cols, diff, 0, mazeGrid));
     } else if (id === 'default') {
       resetToDefault();
     } else {
@@ -82,12 +86,31 @@ export function MazeConfigPanel({ disabled }: { disabled?: boolean }) {
             row {mazeGrid.start.row} col {mazeGrid.start.col}
           </span>
         </label>
-        <label className="config-label-row">
-          <span className="config-label">Goal</span>
+        <div className="flex justify-between items-center mt-1">
+          <label className="config-label">Goal</label>
           <span className="text-xs text-gray-400">
-            row {mazeGrid.goal.row} col {mazeGrid.goal.col}
+            {mazeGrid.goalType === 'center2x2' 
+              ? `Center 2×2` 
+              : `row ${mazeGrid.goal.row} col ${mazeGrid.goal.col}`}
           </span>
-        </label>
+        </div>
+        <div className="flex gap-1 mt-1">
+          <button
+            className={`config-mode-btn flex-1 ${mazeGrid.goalType !== 'center2x2' ? 'active' : ''}`}
+            onClick={() => setGoalType('manual')}
+            disabled={disabled}
+          >
+            Manual
+          </button>
+          <button
+            className={`config-mode-btn flex-1 ${mazeGrid.goalType === 'center2x2' ? 'active' : ''}`}
+            onClick={() => setGoalType('center2x2')}
+            disabled={disabled || !canBeCenter}
+            title={!canBeCenter ? 'Requires even dimensions ≥ 16x16' : ''}
+          >
+            Center 2×2
+          </button>
+        </div>
       </div>
 
       <div className="config-section">
@@ -110,7 +133,7 @@ export function MazeConfigPanel({ disabled }: { disabled?: boolean }) {
           <button
             className={`config-mode-btn ${editMode === 'goal' ? 'active' : ''}`}
             onClick={() => setEditMode('goal')}
-            disabled={disabled}
+            disabled={disabled || mazeGrid.goalType === 'center2x2'}
           >
             Goal
           </button>

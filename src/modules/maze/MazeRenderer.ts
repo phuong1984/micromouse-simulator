@@ -168,8 +168,24 @@ export class MazeRenderer {
     let best: { row: number; col: number; dir: Wall } | null = null;
     let bestDist = threshold;
 
+    const isInternalGoalWall = (r: number, c: number, dir: Wall) => {
+      if (grid.goalType !== 'center2x2') return false;
+      const gr = grid.goal.row;
+      const gc = grid.goal.col;
+      if (dir === WALL.NORTH) {
+        // North wall of row r is the horizontal line between r-1 and r
+        // Internal horizontal wall is between gr and gr+1
+        return r === gr + 1 && (c === gc || c === gc + 1);
+      } else {
+        // West wall of col c is the vertical line between c-1 and c
+        // Internal vertical wall is between gc and gc+1
+        return c === gc + 1 && (r === gr || r === gr + 1);
+      }
+    };
+
     for (let r = 0; r <= grid.rows; r++) {
       for (let c = 0; c < grid.cols; c++) {
+        if (isInternalGoalWall(r, c, WALL.NORTH)) continue;
         const d = this.distToSegment(mx, my, c * cs, r * cs, (c + 1) * cs, r * cs);
         if (d < bestDist && r > 0 && r < grid.rows) {
           bestDist = d;
@@ -180,6 +196,7 @@ export class MazeRenderer {
 
     for (let c = 0; c <= grid.cols; c++) {
       for (let r = 0; r < grid.rows; r++) {
+        if (isInternalGoalWall(r, c, WALL.WEST)) continue;
         const d = this.distToSegment(mx, my, c * cs, r * cs, c * cs, (r + 1) * cs);
         if (d < bestDist && c > 0 && c < grid.cols) {
           bestDist = d;

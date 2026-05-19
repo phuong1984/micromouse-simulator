@@ -226,14 +226,9 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
           targetAngleDiff: (angle * Math.PI) / 180,
           resolve,
         });
-        let rpm = 0;
-        if (userSetWheels.size > 0) {
-          let sum = 0;
-          userSetWheels.forEach(v => sum += Math.abs(v));
-          rpm = sum / userSetWheels.size;
-        } else {
-          rpm = wheelMaxRPM() * 5;
-        }
+        const rpm = (userSetWheels.size > 0)
+          ? Array.from(userSetWheels.values()).reduce((a, b) => a + Math.abs(b), 0) / userSetWheels.size
+          : wheelMaxRPM() * 5;
 
         const speed = angle > 0 ? rpm : -rpm;
         const wheelIds = robotSpec!.wheels.map(w => w.id);

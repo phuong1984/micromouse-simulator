@@ -95,13 +95,25 @@ export function drawMazeMarkers(
     g.circle(startCx, startCy, circleSize * scale).fill(startColor);
   }
 
-  const goalCx = grid.goal.col * cs + halfCs;
-  const goalCy = grid.goal.row * cs + halfCs;
-  g.rect(goalCx - halfCs, goalCy - halfCs, cs, cs)
-    .fill({ color: goalColor, alpha });
-  if (circleSize) {
-    g.circle(goalCx, goalCy, circleSize * scale).fill(goalColor);
-  }
+  const isCenter2x2 = grid.goalType === 'center2x2';
+  const goalCells = isCenter2x2
+    ? [
+        { r: grid.goal.row, c: grid.goal.col },
+        { r: grid.goal.row, c: grid.goal.col + 1 },
+        { r: grid.goal.row + 1, c: grid.goal.col },
+        { r: grid.goal.row + 1, c: grid.goal.col + 1 },
+      ]
+    : [{ r: grid.goal.row, c: grid.goal.col }];
+
+  goalCells.forEach(cell => {
+    const goalCx = cell.c * cs + halfCs;
+    const goalCy = cell.r * cs + halfCs;
+    g.rect(goalCx - halfCs, goalCy - halfCs, cs, cs)
+      .fill({ color: goalColor, alpha });
+    if (circleSize) {
+      g.circle(goalCx, goalCy, circleSize * scale).fill(goalColor);
+    }
+  });
 }
 
 export function computeMazeScale(

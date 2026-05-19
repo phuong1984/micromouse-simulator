@@ -30,9 +30,24 @@ export function addMazeWalls(engine: Matter.Engine, segments: WallSegment[]): Ma
 }
 
 export function addGoalZone(engine: Matter.Engine, grid: MazeGrid): Matter.Body {
+  const isCenter2x2 = grid.goalType === 'center2x2';
   const goal = cellToWorld(grid, grid.goal.row, grid.goal.col);
-  const size = grid.cellSize * 0.8;
-  const goalBody = Matter.Bodies.rectangle(goal.x, goal.y, size, size, {
+
+  // For 2x2, the center is between the 4 cells
+  let goalX = goal.x;
+  let goalY = goal.y;
+  let sizeX = grid.cellSize * 0.8;
+  let sizeY = grid.cellSize * 0.8;
+
+  if (isCenter2x2) {
+    const cs = grid.cellSize;
+    goalX = goal.x + cs / 2;
+    goalY = goal.y + cs / 2;
+    sizeX = cs * 1.8;
+    sizeY = cs * 1.8;
+  }
+
+  const goalBody = Matter.Bodies.rectangle(goalX, goalY, sizeX, sizeY, {
     isStatic: true,
     isSensor: true,
     label: 'goal-zone',

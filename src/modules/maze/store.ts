@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { MazeGrid, Wall } from '../../shared/types/maze';
 import { WALL } from '../../shared/types/maze';
-import { setWall, removeWall, isReachable, cloneCells } from '../../shared/utils/maze';
+import { setWall, removeWall, isReachable, cloneCells, clearInternalWalls2x2 } from '../../shared/utils/maze';
 import { loadSavedPresets, persistPresets } from '../../shared/utils/preset-storage';
 import { generateMaze } from './generate';
 
@@ -33,6 +33,7 @@ function createEmptyMaze(rows: number, cols: number): MazeGrid {
     cells,
     start: { row: rows - 1, col: 0 },
     goal: { row: 0, col: cols - 1 },
+    goalType: 'manual',
   };
 }
 
@@ -50,6 +51,7 @@ export interface MazeStore {
   toggleWall: (row: number, col: number, direction: Wall) => void;
   setStart: (row: number, col: number) => void;
   setGoal: (row: number, col: number) => void;
+  setGoalType: (type: 'manual' | 'center2x2') => void;
   setEditMode: (mode: 'wall' | 'start' | 'goal') => void;
   undo: () => void;
   redo: () => void;
@@ -74,6 +76,15 @@ export const useMazeStore = create<MazeStore>((set, get) => ({
     const state = get();
     const snapshot = { ...state.mazeGrid, cells: cloneCells(state.mazeGrid.cells) };
     const newGrid = createEmptyMaze(n, state.mazeGrid.cols);
+
+    // Maintain goalType if valid
+    const canBeCenter = (n % 2 === 0) && (state.mazeGrid.cols % 2 === 0) && (n >= 16) && (state.mazeGrid.cols >= 16);
+    if (state.mazeGrid.goalType === 'center2x2' && canBeCenter) {
+      newGrid.goalType = 'center2x2';
+      newGrid.goal = { row: n / 2 - 1, col: state.mazeGrid.cols / 2 - 1 };
+      clearInternalWalls2x2(newGrid, newGrid.goal.row, newGrid.goal.col);
+    }
+
     set({
       mazeGrid: newGrid,
       history: [...state.history, snapshot],
@@ -85,6 +96,15 @@ export const useMazeStore = create<MazeStore>((set, get) => ({
     const state = get();
     const snapshot = { ...state.mazeGrid, cells: cloneCells(state.mazeGrid.cells) };
     const newGrid = createEmptyMaze(state.mazeGrid.rows, n);
+
+    // Maintain goalType if valid
+    const canBeCenter = (state.mazeGrid.rows % 2 === 0) && (n % 2 === 0) && (state.mazeGrid.rows >= 16) && (n >= 16);
+    if (state.mazeGrid.goalType === 'center2x2' && canBeCenter) {
+      newGrid.goalType = 'center2x2';
+      newGrid.goal = { row: state.mazeGrid.rows / 2 - 1, col: n / 2 - 1 };
+      clearInternalWalls2x2(newGrid, newGrid.goal.row, newGrid.goal.col);
+    }
+
     set({
       mazeGrid: newGrid,
       history: [...state.history, snapshot],
@@ -95,12 +115,27 @@ export const useMazeStore = create<MazeStore>((set, get) => ({
   toggleWall: (row, col, direction) => {
     const state = get();
     const { mazeGrid } = state;
+
+    // Boundary checks
     if (
       (direction === WALL.NORTH && row === 0) ||
       (direction === WALL.SOUTH && row === mazeGrid.rows - 1) ||
       (direction === WALL.WEST && col === 0) ||
       (direction === WALL.EAST && col === mazeGrid.cols - 1)
     ) return;
+
+    // Prevent internal walls in 2x2 Goal
+    if (mazeGrid.goalType === 'center2x2') {
+      const gr = mazeGrid.goal.row;
+      const gc = mazeGrid.goal.col;
+      const isInternal =
+        (direction === WALL.EAST && col === gc && (row === gr || row === gr + 1)) ||
+        (direction === WALL.WEST && col === gc + 1 && (row === gr || row === gr + 1)) ||
+        (direction === WALL.SOUTH && row === gr && (col === gc || col === gc + 1)) ||
+        (direction === WALL.NORTH && row === gr + 1 && (col === gc || col === gc + 1));
+
+      if (isInternal) return;
+    }
 
     const snapshot = { ...mazeGrid, cells: cloneCells(mazeGrid.cells) };
     const newCells = cloneCells(mazeGrid.cells);
@@ -133,11 +168,41 @@ export const useMazeStore = create<MazeStore>((set, get) => ({
   setGoal: (row, col) => {
     const state = get();
     const { mazeGrid } = state;
+    if (mazeGrid.goalType === 'center2x2') return;
+
     const snapshot = { ...mazeGrid, cells: cloneCells(mazeGrid.cells) };
     set({
       mazeGrid: { ...mazeGrid, goal: { row, col } },
       history: [...state.history, snapshot],
       future: [],
+    });
+  },
+
+  setGoalType: (type) => {
+    const state = get();
+    const { mazeGrid } = state;
+    const snapshot = { ...mazeGrid, cells: cloneCells(mazeGrid.cells) };
+
+    const canBeCenter = (mazeGrid.rows % 2 === 0) && (mazeGrid.cols % 2 === 0) && (mazeGrid.rows >= 16) && (mazeGrid.cols >= 16);
+    const finalType = (type === 'center2x2' && canBeCenter) ? 'center2x2' : 'manual';
+
+    const newCells = cloneCells(mazeGrid.cells);
+    const newGrid: MazeGrid = { 
+      ...mazeGrid, 
+      cells: newCells, 
+      goalType: finalType as 'manual' | 'center2x2' 
+    };
+
+    if (finalType === 'center2x2') {
+      newGrid.goal = { row: mazeGrid.rows / 2 - 1, col: mazeGrid.cols / 2 - 1 };
+      clearInternalWalls2x2(newGrid, newGrid.goal.row, newGrid.goal.col);
+    }
+
+    set({
+      mazeGrid: newGrid,
+      history: [...state.history, snapshot],
+      future: [],
+      editMode: finalType === 'center2x2' ? 'wall' : state.editMode,
     });
   },
 
@@ -194,7 +259,7 @@ export const useMazeStore = create<MazeStore>((set, get) => ({
   generateMaze: (difficulty) => {
     const state = get();
     const snapshot = { ...state.mazeGrid, cells: cloneCells(state.mazeGrid.cells) };
-    const newGrid = generateMaze(state.mazeGrid.rows, state.mazeGrid.cols, difficulty);
+    const newGrid = generateMaze(state.mazeGrid.rows, state.mazeGrid.cols, difficulty, 0, state.mazeGrid);
     set({
       mazeGrid: newGrid,
       history: [...state.history, snapshot],
@@ -237,6 +302,21 @@ export const useMazeStore = create<MazeStore>((set, get) => ({
 
   reachable: () => {
     const { mazeGrid } = get();
+    if (mazeGrid.goalType === 'center2x2') {
+      const g = mazeGrid.goal;
+      const results = [
+        isReachable(mazeGrid, mazeGrid.start, { row: g.row, col: g.col }),
+        isReachable(mazeGrid, mazeGrid.start, { row: g.row, col: g.col + 1 }),
+        isReachable(mazeGrid, mazeGrid.start, { row: g.row + 1, col: g.col }),
+        isReachable(mazeGrid, mazeGrid.start, { row: g.row + 1, col: g.col + 1 }),
+      ];
+      const reachableOnes = results.filter(r => r.reachable);
+      if (reachableOnes.length === 0) return { reachable: false, steps: -1 };
+      return { 
+        reachable: true, 
+        steps: Math.min(...reachableOnes.map(r => r.steps)) 
+      };
+    }
     return isReachable(mazeGrid, mazeGrid.start, mazeGrid.goal);
   },
 }));
