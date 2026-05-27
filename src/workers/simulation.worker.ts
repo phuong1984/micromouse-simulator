@@ -20,7 +20,9 @@ let sensorSim: SensorSimulator | null = null;
 let isRunning = false;
 let isFinished = false;
 let tickCount = 0;
-let startTime = 0;
+let isTimerRunning = true;
+let accumulatedTime = 0;
+let lastResumeTime = 0;
 let micropython: MicroPythonModule | null = null;
 let logBuffer: string[] = [];
 let replayPath: PathPoint[] = [];
@@ -138,7 +140,10 @@ function tick() {
   }
 
   const state = extractRobotState(robotPhysics.body);
-  const elapsedMs = performance.now() - startTime;
+  const now = performance.now();
+  const elapsedMs = isTimerRunning 
+    ? accumulatedTime + (now - lastResumeTime)
+    : accumulatedTime;
 
   replayPath.push({
     tick: tickCount,
@@ -182,7 +187,9 @@ function startTickLoop() {
   isRunning = true;
   isFinished = false;
   tickCount = 0;
-  startTime = performance.now();
+  accumulatedTime = 0;
+  lastResumeTime = performance.now();
+  isTimerRunning = true;
   pendingMoves = [];
   setTimeout(tick, PHYSICS_TIMESTEP_MS);
 }
@@ -299,9 +306,22 @@ function setupAsyncRobotAPI(mp: MicroPythonModule) {
     },
 
     reset_timer: () => {
-      startTime = performance.now();
+      accumulatedTime = 0;
+      lastResumeTime = performance.now();
       tickCount = 0;
       replayPath = [];
+    },
+
+    set_timer_running: (enable: boolean) => {
+      const now = performance.now();
+      if (isTimerRunning && !enable) {
+        // Pausing
+        accumulatedTime += (now - lastResumeTime);
+      } else if (!isTimerRunning && enable) {
+        // Resuming
+        lastResumeTime = now;
+      }
+      isTimerRunning = !!enable;
     },
 
     sleep: (ms: number) => {
@@ -367,9 +387,15 @@ function initPhysics(spec: RobotSpec, grid: MazeGrid) {
     isFinished = true;
     isRunning = false;
     pendingMoves = [];
+    
+    const now = performance.now();
+    const finalElapsedMs = isTimerRunning 
+      ? accumulatedTime + (now - lastResumeTime)
+      : accumulatedTime;
+
     postToMain({
       type: 'FINISHED',
-      payload: { elapsedMs: performance.now() - startTime, path: replayPath, logs: [...logBuffer], reason: 'goal' },
+      payload: { elapsedMs: finalElapsedMs, path: replayPath, logs: [...logBuffer], reason: 'goal' },
     });
   });
 
@@ -478,9 +504,14 @@ async function handleStart(payload: { robotSpec: RobotSpec; mazeGrid: MazeGrid; 
 
     if (isRunning && !isFinished) {
       isRunning = false;
+      const now = performance.now();
+      const finalElapsedMs = isTimerRunning 
+        ? accumulatedTime + (now - lastResumeTime)
+        : accumulatedTime;
+
       postToMain({
         type: 'FINISHED',
-        payload: { elapsedMs: performance.now() - startTime, path: replayPath, logs: [...logBuffer], reason: 'completed' },
+        payload: { elapsedMs: finalElapsedMs, path: replayPath, logs: [...logBuffer], reason: 'completed' },
       });
     }
   } catch (err: unknown) {

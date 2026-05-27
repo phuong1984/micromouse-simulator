@@ -188,6 +188,18 @@ export function registerRobotBlocks(): void {
     }
   };
 
+  Blockly.Blocks['robot_set_timer_running'] = {
+    init: function() {
+      this.appendDummyInput()
+          .appendField('Set Timer Running')
+          .appendField(new Blockly.FieldCheckbox('TRUE'), 'ENABLE');
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setStyle('robot_sensor');
+      this.setTooltip('Pause or resume the simulation timer');
+    }
+  };
+
   // --- Python Generators ---
 
   pythonGenerator.forBlock['robot_move'] = function (block: Blockly.Block) {
@@ -248,5 +260,10 @@ export function registerRobotBlocks(): void {
   pythonGenerator.forBlock['robot_bypass_goal_detect'] = function (block: Blockly.Block) {
     const enable = block.getFieldValue('ENABLE') === 'TRUE' ? 'True' : 'False';
     return `robot.bypass_goal_detect(${enable})\n`;
+  };
+
+  pythonGenerator.forBlock['robot_set_timer_running'] = function (block: Blockly.Block) {
+    const enable = block.getFieldValue('ENABLE') === 'TRUE' ? 'True' : 'False';
+    return `robot.set_timer_running(${enable})\n`;
   };
 }
